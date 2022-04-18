@@ -1,7 +1,28 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
+import axios from 'axios';
+import cheerio from 'cheerio';
+import { format } from 'date-fns';
+import { getArgs } from './helpers/args.js';
 
-const minPrice = 10_000_000;
+const args = getArgs(process.argv);
+
+const minPrice = args.s ? args.s : 300_000;
+
+const customer = args.c;
+
+console.log(
+	customer
+		? `Результаты поиска по наименованию заказчика «${customer}»`
+		: 'Результаты поиска по всем заказчикам'
+);
+
+const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
+
+// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)" -c "наименование заказчика"
+
+console.log(
+	`Результаты на ${date === '*' ? 'все опубликованные активные закупки' : date
+	} с минимальной суммой контракта ${minPrice}`
+);
 
 class UrlEncode {
 	constructor(query) {
@@ -12,16 +33,31 @@ class UrlEncode {
 	}
 }
 
-const urls = [
-	['Организация командировок', new UrlEncode('организация командировок').url],
-	['Организация деловых поездок', new UrlEncode('организация деловых поездок').url],
-	['Служебных поездок', new UrlEncode('cлужебных поездок').url],
-	['Выдворение', new UrlEncode('выдворение').url],
-	['Бронирование билетов', new UrlEncode('бронирование билетов').url],
-	['Оформление авиабилетов', new UrlEncode('оформление авиабилетов').url],
-	['Служебных командирований', new UrlEncode('служебных командирований').url],
-	['Служебных командировок', new UrlEncode('служебных командировок').url],
-];
+const urls = args.q
+	? [[args.q, new UrlEncode(args.q).url]]
+	: [
+		['Оказания услуг по бронированию, оформлению, продаже, обмену и возврату авиабилетов', new UrlEncode('оказания услуг по бронированию, оформлению, продаже, обмену и возврату авиабилетов').url],
+		['Организация командировок', new UrlEncode('организация командировок').url],
+		['Организация деловых поездок', new UrlEncode('организация деловых поездок').url],
+		['Служебных поездок', new UrlEncode('cлужебных поездок').url],
+		['Выдворение', new UrlEncode('выдворение').url],
+		['Проездных документов ', new UrlEncode('проездных документов ').url],
+		['Бронирование билетов', new UrlEncode('бронирование билетов').url],
+		['Оформление авиабилетов', new UrlEncode('оформление авиабилетов').url],
+		['Служебных командирований', new UrlEncode('служебных командирований').url],
+		['Служебных командировок', new UrlEncode('служебных командировок').url],
+		['Гостиничные услуги', new UrlEncode('гостиничные услуги').url],
+		['Проживание экипажей', new UrlEncode('проживание экипажей').url],
+		['Обеспечение авиабилетами', new UrlEncode('обеспечение авиабилетами').url],
+		['Обеспечение авиационными билетами', new UrlEncode('обеспечение авиационными билетами').url],
+		['Бронирование мест на авиарейсы, оформлению и продаже авиабилетов', new UrlEncode('бронированию мест на авиарейсы, оформлению и продаже авиабилетов').url],
+		['Пассажирские авиаперевозки иностранных граждан', new UrlEncode('пассажирские авиаперевозки иностранных граждан').url,],
+		['Оказание услуг связанных с бронированием', new UrlEncode('оказание услуг связанных с бронированием').url],
+		['Оказание услуг по реализации авиа, ж/д билетов', new UrlEncode('оказание услуг по реализации авиа, ж/д билетов').url],
+		['Оказание услуг по организации командирования', new UrlEncode('организации командирования').url],
+		// ['Деловых мероприятий', new UrlEncode('деловых мероприятий').url],
+		// ['Протокольных мероприятий', new UrlEncode('протокольных мероприятий').url],
+	];
 
 let parseResults = [];
 
@@ -63,15 +99,30 @@ const parseData = (html, minPrice) => {
 					.attr('href'),
 		};
 		result.documents = result.link.replace('common-info', 'documents');
+
 		if (
 			!parseResults.filter(
 				(parseResult) => parseResult.link == result.link
 			).length
+			//Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
 		) {
-			data.push(result);
-		} //Проверка на дубли результатов парсинга по разным поисковым запросам
+			if (result.published == date || date == '*') {
+				//Фильтр по дате, если дата не указана выводятся все даты
+				const isCustomer = args.c
+					? result.customer
+						.toLowerCase()
+						.replaceAll('"', '')
+						.match(args.c)
+					: undefined;
+				if (isCustomer || args.c === undefined) {
+					//Фильтр по наименованию клиента
+					data.push(result);
+				}
+			}
+		}
 
 		parseResults.push(result);
+
 		data = data.filter(
 			(item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice
 		);
@@ -79,7 +130,7 @@ const parseData = (html, minPrice) => {
 	console.log(
 		data.length > 0
 			? data
-			: 'Нет результатов удовлетворяющих минимальной цене контракта'
+			: 'Нет результатов удовлетворяющих критериям поиска'
 	);
 };
 
