@@ -5,15 +5,29 @@ import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 
 export const parserZakupkiGov = () => {
+
 	const args = getArgs(argv);
 
 	const minPrice = args.s ? args.s : 300_000;
 
-	const customer = args.c;
+	const customer = args.c?.toLowerCase();
+
+	console.log(customer ? `Поиск по клиенту «${customer[0].toUpperCase()}${customer.slice(1)}»` : 'Поиск по всем клиентам');
+
+	console.log(
+		customer
+			? `Результаты поиска по наименованию заказчика «${customer}»`
+			: 'Результаты поиска по всем заказчикам',
+	);
 
 	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
 
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)" -c "наименование заказчика"
+
+	console.log(
+		`Результаты на ${date === '*' ? 'все опубликованные активные закупки' : date
+		} с минимальной суммой контракта ${minPrice}`,
+	);
 
 	class UrlEncode {
 		constructor(query) {
@@ -72,18 +86,6 @@ export const parserZakupkiGov = () => {
 
 	let parseResults = [];
 
-	console.log(
-		customer
-			? `Zakupki.gov: Результаты поиска по наименованию заказчика «${customer}»`
-			: 'Zakupki.gov: Результаты поиска по всем заказчикам',
-	);
-
-	console.log(
-		`Результаты на ${date === '*' ? 'все опубликованные активные закупки' : date
-		} с минимальной суммой контракта ${minPrice}`,
-	);
-
-
 	const parseData = (html, minPrice) => {
 		let data = [];
 		const $ = cheerio.load(html);
@@ -102,15 +104,15 @@ export const parserZakupkiGov = () => {
 			result.documents = result.link.replace('common-info', 'documents');
 
 			if (
-				!parseResults.filter((parseResult) => parseResult.link == result.link).length
+				parseResults.filter((parseResult) => parseResult.link == result.link).length == 0
 				//Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
 			) {
-				if (result.published == date || date == '*') {
+				if (result.published === date || date === '*') {
 					//Фильтр по дате, если дата не указана выводятся все даты
-					const isCustomer = args.c
-						? result.customer.toLowerCase().replaceAll('"', '').match(args.c)
+					const isCustomer = customer
+						? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
 						: undefined;
-					if (isCustomer || args.c === undefined) {
+					if (isCustomer || customer === undefined) {
 						//Фильтр по наименованию клиента
 						data.push(result);
 					}
@@ -143,7 +145,7 @@ export const parserZakupkiGov = () => {
 				} else {
 					for (let i = 1; i <= pages; i++) {
 						let newUrl = url[1].replace(/pageNumber=\d/, `pageNumber=${i}`);
-
+						//console.log(`НОВАЯ ССЫЛКА  ${newUrl}`);
 						axios.get(newUrl).then((res) => {
 							console.log(
 								`\nКоличество страниц по запросу "${url[0]}" — ${pages}` +
