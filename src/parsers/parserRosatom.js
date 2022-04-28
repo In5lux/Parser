@@ -1,15 +1,20 @@
 import axios from 'axios';
 import cheerio from 'cheerio';
+import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 
-export const parserRosatom = () => {
+const parserRosatom = () => {
 	const args = getArgs(argv);
 
 	const minPrice = args.s ? args.s : 1_000_000;
-	const year = args.y ? args.y : new Date().getFullYear();
+	const customer = args.c?.toLowerCase();
+	const year = args.y;
+	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
 
 	// Формат — node -s "цена контракта (число)" -y "год публикации закупки (гггг)"
+
+
 
 	class UrlEncode {
 		constructor(query) {
@@ -25,7 +30,10 @@ export const parserRosatom = () => {
 		['Проездных документов', new UrlEncode('проездных документов').url],
 		['Служебных поездок', new UrlEncode('служебных поездок').url],
 		['Авиабилетов', new UrlEncode('авиабилетов').url],
+		['Авиационных билетов', new UrlEncode('авиационных билетов').url],
+		['Железнодорожных билетов', new UrlEncode('железнодорожных билетов').url],
 		['Служебных командировок', new UrlEncode('служебных командировок').url],
+		['Командирований', new UrlEncode('командирований').url],
 		['Оказание услуг по организации командирования', new UrlEncode('организации командирования').url],
 		['Транспортного обслуживания', new UrlEncode('транспортного обслуживания').url],
 		['Протокольных мероприятий', new UrlEncode('протокольных мероприятий').url],
@@ -52,15 +60,23 @@ export const parserRosatom = () => {
 
 			const yearPublished = result.published.split('.')[2];
 
+
 			if (
-				!parseResults.filter((parseResult) => {
-					parseResult.link == result.link;
-				}).length &&
-				!!result.number &&
-				yearPublished == year
+				parseResults.filter((parseResult) => parseResult.link == result.link).length == 0 &&
+				!!result.number
+				//Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
 			) {
-				data.push(result);
-			} //Проверка на дубли результатов парсинга по разным поисковым запросам
+				if (yearPublished == year || date === '*' || result.published === date) {
+					//Фильтр по дате, если дата не указана выводятся все даты
+					const isCustomer = customer
+						? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
+						: undefined;
+					if (isCustomer || customer === undefined) {
+						//Фильтр по наименованию клиента
+						data.push(result);
+					}
+				}
+			}
 
 			parseResults.push(result);
 			data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
@@ -69,7 +85,7 @@ export const parserRosatom = () => {
 		console.log(
 			data.length > 0
 				? data
-				: `Нет результатов удовлетворяющих минимальной цене контракта по запросу «${query}»`,
+				: `Rosatom — нет результатов на дату ${year ? year : date} с минимальной ценой контракта ${minPrice} по запросу «${query}»`,
 		);
 	};
 
@@ -79,10 +95,10 @@ export const parserRosatom = () => {
 			.then((res) => {
 				parseData(res.data, minPrice, url[0]);
 			})
-			.catch((err) => console.log(err));
+			.catch((err) => console.log(err.message));
 	};
 
 	urls.forEach((url) => getData(url));
 };
 
-parserRosatom();
+export { parserRosatom }

@@ -4,7 +4,8 @@ import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 
-export const parserZakazRF = () => {
+const parserZakazRF = () => {
+
 	const args = getArgs(argv);
 
 	const minPrice = args.s ? args.s : 300_000;
@@ -27,47 +28,11 @@ export const parserZakazRF = () => {
 	const urls = args.q
 		? [[args.q, new UrlEncode(args.q).url]]
 		: [
-			[
-				'Оказания услуг по бронированию, оформлению, продаже, обмену и возврату авиабилетов',
-				new UrlEncode(
-					'оказания услуг по бронированию, оформлению, продаже, обмену и возврату авиабилетов',
-				).url,
-			],
+			['Командировки', new UrlEncode('командировки').url],
 			['Организация командировок', new UrlEncode('организация командировок').url],
-			['Организация деловых поездок', new UrlEncode('организация деловых поездок').url],
+			['Деловых поездок', new UrlEncode('деловых поездок').url],
 			['Служебных поездок', new UrlEncode('cлужебных поездок').url],
-			['Выдворение', new UrlEncode('выдворение').url],
-			['Проездных документов ', new UrlEncode('проездных документов ').url],
-			['Бронирование билетов', new UrlEncode('бронирование билетов').url],
-			['Оформление авиабилетов', new UrlEncode('оформление авиабилетов').url],
-			['Служебных командирований', new UrlEncode('служебных командирований').url],
-			['Служебных командировок', new UrlEncode('служебных командировок').url],
-			['Гостиничные услуги', new UrlEncode('гостиничные услуги').url],
-			['Проживание экипажей', new UrlEncode('проживание экипажей').url],
-			['Обеспечение авиабилетами', new UrlEncode('обеспечение авиабилетами').url],
-			['Обеспечение авиационными билетами', new UrlEncode('обеспечение авиационными билетами').url],
-			[
-				'Бронирование мест на авиарейсы, оформлению и продаже авиабилетов',
-				new UrlEncode('бронированию мест на авиарейсы, оформлению и продаже авиабилетов').url,
-			],
-			[
-				'Пассажирские авиаперевозки иностранных граждан',
-				new UrlEncode('пассажирские авиаперевозки иностранных граждан').url,
-			],
-			[
-				'Оказание услуг связанных с бронированием',
-				new UrlEncode('оказание услуг связанных с бронированием').url,
-			],
-			[
-				'Оказание услуг по реализации авиа, ж/д билетов',
-				new UrlEncode('оказание услуг по реализации авиа, ж/д билетов').url,
-			],
-			[
-				'Оказание услуг по организации командирования',
-				new UrlEncode('организации командирования').url,
-			],
-			['Деловых мероприятий', new UrlEncode('деловых мероприятий').url],
-			['Протокольных мероприятий', new UrlEncode('протокольных мероприятий').url],
+			['Авиабилетов', new UrlEncode('авиабилетов').url],
 		];
 
 	let parseResults = [];
@@ -123,7 +88,7 @@ export const parserZakazRF = () => {
 			console.log(
 				data.length > 0
 					? data
-					: `Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}"\n`,
+					: `ZakazRF — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}"\n`,
 			);
 		}
 	};
@@ -134,10 +99,11 @@ export const parserZakazRF = () => {
 			.then((res) => {
 				parseData(res.data, minPrice, url[0]);
 			})
-			.catch((err) => console.log(err));
+			.catch((err) => console.log(url[0] + ' — ' + err.message));
 	};
 
 	urls.forEach((url) => getData(url));
+
 };
 
-parserZakazRF();
+export { parserZakazRF }

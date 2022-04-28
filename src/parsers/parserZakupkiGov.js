@@ -4,7 +4,8 @@ import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 
-export const parserZakupkiGov = () => {
+
+const parserZakupkiGov = () => {
 
 	const args = getArgs(argv);
 
@@ -54,6 +55,9 @@ export const parserZakupkiGov = () => {
 			['Проездных документов ', new UrlEncode('проездных документов ').url],
 			['Бронирование билетов', new UrlEncode('бронирование билетов').url],
 			['Оформление авиабилетов', new UrlEncode('оформление авиабилетов').url],
+			['Авиационных билетов', new UrlEncode('авиационных билетов').url],
+			['Железнодорожных билетов', new UrlEncode('железнодорожных билетов').url],
+			['Служебных командировок', new UrlEncode('служебных командировок').url],
 			['Служебных командирований', new UrlEncode('служебных командирований').url],
 			['Служебных командировок', new UrlEncode('служебных командировок').url],
 			['Гостиничные услуги', new UrlEncode('гостиничные услуги').url],
@@ -86,7 +90,7 @@ export const parserZakupkiGov = () => {
 
 	let parseResults = [];
 
-	const parseData = (html, minPrice) => {
+	const parseData = (html, minPrice, query) => {
 		let data = [];
 		const $ = cheerio.load(html);
 
@@ -123,7 +127,7 @@ export const parserZakupkiGov = () => {
 
 			data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 		});
-		console.log(data.length > 0 ? data : 'Нет результатов удовлетворяющих критериям поиска');
+		console.log(data.length > 0 ? data : `Zakupki Gov — Нет результатов удовлетворяющих критериям поиска на ${date} с минимальной ценой ${minPrice} по запросу «${query}»`);
 	};
 
 	const countPages = (html, url) => {
@@ -139,27 +143,27 @@ export const parserZakupkiGov = () => {
 				const pages = countPages(res.data, url);
 				if (!pages) {
 					console.log(
-						`\nКоличество страниц по запросу "${url[0]}" — 1` + `\nСтраница 1 по запросу ${url[0]}`,
+						`\nZakupki Gov — Количество страниц по запросу "${url[0]}" — 1` + `\nСтраница 1 по запросу ${url[0]}`,
 					);
-					parseData(res.data, minPrice);
+					parseData(res.data, minPrice, url[0]);
 				} else {
 					for (let i = 1; i <= pages; i++) {
 						let newUrl = url[1].replace(/pageNumber=\d/, `pageNumber=${i}`);
 						//console.log(`НОВАЯ ССЫЛКА  ${newUrl}`);
 						axios.get(newUrl).then((res) => {
 							console.log(
-								`\nКоличество страниц по запросу "${url[0]}" — ${pages}` +
+								`\nZakupki Gov — Количество страниц по запросу "${url[0]}" — ${pages}` +
 								`\nСтраница ${i} по запросу ${url[0]}`,
 							);
-							parseData(res.data, minPrice);
+							parseData(res.data, minPrice, url[0]);
 						});
 					}
 				}
 			})
-			.catch((err) => console.log(err));
+			.catch((err) => console.log(err.message));
 	};
 
 	urls.forEach((url) => getData(url));
 };
 
-parserZakupkiGov();
+export { parserZakupkiGov }

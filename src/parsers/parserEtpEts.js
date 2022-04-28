@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 
-export const parserEtpEts = () => {
+const parserEtpEts = () => {
 
 	const args = getArgs(argv);
 
@@ -41,6 +41,9 @@ export const parserEtpEts = () => {
 			['Проездных документов ', new UrlEncode('проездных документов ').url],
 			['Бронирование билетов', new UrlEncode('бронирование билетов').url],
 			['Оформление авиабилетов', new UrlEncode('оформление авиабилетов').url],
+			['Авиационных билетов', new UrlEncode('авиационных билетов').url],
+			['Железнодорожных билетов', new UrlEncode('железнодорожных билетов').url],
+			['Служебных командировок', new UrlEncode('служебных командировок').url],
 			['Служебных командирований', new UrlEncode('служебных командирований').url],
 			['Служебных командировок', new UrlEncode('служебных командировок').url],
 			['Гостиничные услуги', new UrlEncode('гостиничные услуги').url],
@@ -121,7 +124,7 @@ export const parserEtpEts = () => {
 			console.log(
 				data.length > 0
 					? data
-					: `Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}"\n`,
+					: `Etp Ets — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}"\n`,
 			);
 		}
 	};
@@ -132,10 +135,10 @@ export const parserEtpEts = () => {
 			.then((res) => {
 				parseData(res.data, minPrice, url[0]);
 			})
-			.catch((err) => console.log(err));
+			.catch((err) => console.log(err.message));
 	};
 
 	urls.forEach((url) => getData(url));
 };
 
-parserEtpEts();
+export { parserEtpEts }
