@@ -25,18 +25,18 @@ const parserRosatom = () => {
 		}
 	}
 
-	const urls = [
-		['Деловых поездок', new UrlEncode('деловых поездок').url],
-		['Проездных документов', new UrlEncode('проездных документов').url],
-		['Служебных поездок', new UrlEncode('служебных поездок').url],
-		['Авиабилетов', new UrlEncode('авиабилетов').url],
-		['Авиационных билетов', new UrlEncode('авиационных билетов').url],
-		['Железнодорожных билетов', new UrlEncode('железнодорожных билетов').url],
-		['Служебных командировок', new UrlEncode('служебных командировок').url],
-		['Командирований', new UrlEncode('командирований').url],
-		['Оказание услуг по организации командирования', new UrlEncode('организации командирования').url],
-		['Транспортного обслуживания', new UrlEncode('транспортного обслуживания').url],
-		['Протокольных мероприятий', new UrlEncode('протокольных мероприятий').url],
+	const queries = [
+		'Деловых поездок',
+		'Проездных документов',
+		'Служебных поездок',
+		'Авиабилетов',
+		'Авиационных билетов',
+		'Железнодорожных билетов',
+		'Служебных командировок',
+		'Командирований',
+		'Оказание услуг по организации командирования',
+		'Транспортного обслуживания',
+		'Протокольных мероприятий',
 	];
 
 	let parseResults = [];
@@ -89,16 +89,18 @@ const parserRosatom = () => {
 		);
 	};
 
-	const getData = (url) => {
+	const getData = (query) => {
+		const url = new UrlEncode(query).url;
 		axios
-			.get(url[1])
+			.get(url)
 			.then((res) => {
-				parseData(res.data, minPrice, url[0]);
+				parseData(res.data, minPrice, query);
 			})
-			.catch((err) => console.log(err.message));
+			.catch((err) => console.log('Rosatom — ' + query + ' — ' + err.message));
 	};
 
-	urls.forEach((url) => getData(url));
+	queries.forEach((query) => getData(query));
+
 };
 
 export { parserRosatom }
