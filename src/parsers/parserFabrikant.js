@@ -3,7 +3,7 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { dateFormat } from '../helpers/dateFormater.js';
+import { dateFormat } from '../helpers/dateFormatter.js';
 
 const parserFabrikant = () => {
 
@@ -72,8 +72,8 @@ const parserFabrikant = () => {
 					customer: $(elem).find('.marketplace-unit__organizer a span:last-child').text(),
 					description: $(elem).find('.marketplace-unit__title a').text().trim(),
 					price: $(elem).find('.marketplace-unit__price span strong').text().trim() || $(elem).find('.marketplace-unit__price p').text().trim() || $(elem).find('.marketplace-unit__price>span').text().trim(),
-					published: $(elem).find('.marketplace-unit__state:first-child .dt').text(),
-					end: $(elem).find('.marketplace-unit__state:last-child .dt').text(),
+					published: $(elem).find('.marketplace-unit__state__wrap>.marketplace-unit__state:first-child .dt').text(),
+					end: $(elem).find('.marketplace-unit__state__wrap>.marketplace-unit__state:last-child .dt').text(),
 					link: 'https://www.fabrikant.ru' + $(elem).find('.marketplace-unit__title a').attr('href'),
 				}
 
@@ -97,6 +97,8 @@ const parserFabrikant = () => {
 						}
 					}
 				}
+				parseResults.push(result);
+
 				data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 			});
 		}
