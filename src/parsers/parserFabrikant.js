@@ -42,6 +42,7 @@ const parserFabrikant = () => {
 			'Бронирование билетов',
 			'Оформление авиабилетов',
 			'Служебных командирований',
+			'Командированию сотрудников',
 			'Служебных командировок',
 			'Проживание экипажей',
 			'Обеспечение авиабилетами',
@@ -57,7 +58,7 @@ const parserFabrikant = () => {
 		let data = [];
 		const $ = cheerio.load(html);
 
-		const isNotExsist = $('.Search-result-no')['0']?.name === 'div'
+		const isNotExsist = $('.Search-result-no')['0']?.name === 'div';
 
 		if (isNotExsist) {
 			console.log(`Fabrikant — Нет доступных результатов по ключевому запросу "${query}"\n`);

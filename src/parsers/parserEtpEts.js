@@ -15,7 +15,7 @@ const parserEtpEts = () => {
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
 	console.log(
-		`Результаты на ${date === '*' ? 'все опубликованные закупки' : date
+		`Etp Ets 44 — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
 		} с минимальной суммой контракта ${minPrice}`,
 	);
 
@@ -41,6 +41,7 @@ const parserEtpEts = () => {
 			'Служебных командировок',
 			'Служебных командирований',
 			'Служебных командировок',
+			'Командированию сотрудников',
 			'Гостиничные услуги',
 			'Проживание экипажей',
 			'Обеспечение авиабилетами',
@@ -104,7 +105,7 @@ const parserEtpEts = () => {
 			console.log(
 				data.length > 0
 					? data
-					: `Etp Ets — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}"\n`,
+					: `Etp Ets 44 — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}"\n`,
 			);
 		}
 	};
@@ -116,7 +117,7 @@ const parserEtpEts = () => {
 			.then((res) => {
 				parseData(res.data, minPrice, query);
 			})
-			.catch((err) => console.log('EtpEts — ' + query + ' — ' + err.message));
+			.catch((err) => console.log('Etp Ets 44 — ' + query + ' — ' + err.message));
 	};
 
 	queries.forEach((query) => getData(query));
