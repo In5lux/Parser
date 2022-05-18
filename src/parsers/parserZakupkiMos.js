@@ -40,73 +40,80 @@ const parserZakupkiMos = () => {
 
 	let parseResults = [];
 
-	const parseData = async (url, minPrice, query, results) => {
+	const parseData = async (minPrice, queries) => {
 		const browser = await puppeteer.launch({
 			headless: true, // false: enables one to view the Chrome instance in action
-			//defaultViewport: { width: 1263, height: 930 }, // (optional) useful only in non-headless mode
+			//defaultViewport: { width: 1263, height: 930 }, // (optional)
 		});
-		const page = await browser.newPage();
-		await page.waitForTimeout(3000);
-		await page.goto(url, { waitUntil: 'networkidle2' });
-		//await page.setViewport({ width: 1263, height: 930 })
-		//await page.screenshot({ path: 'zakupki.png' });
-		const HTML = await page.content();
-		await browser.close();
-		const $ = cheerio.load(HTML);
-		let data = [];
 
-		const isExsist = !$('body').text().includes('Ничего не нашлось');
+		let count = queries.length;
 
-		if (isExsist) {
-			$('.PublicListStyles__PublicListContentContainer-sc-1q0smku-1>div').each((i, elem) => {
-				const result = {
-					number: $(elem).find('a.CardStyles__MainInfoNumberHeader-sc-18miw4v-3>span').text(),
-					type: $(elem).find('.CardStyles__FlexContainer-sc-18miw4v-0>span').text(),
-					law: $(elem).find('.CardStyles__AdditionalInfoHeader-sc-18miw4v-10:nth-child(2)>span').text(),
-					status: $(elem).find('.CardStyles__MainInfoStateIndicator-sc-18miw4v-4>div.content').text(),
-					customer: $(elem).find('.PurchaseCardStyles__MainInfoCustomerHeader-sc-3hfhop-0').text(),
-					description: $(elem).find('a.CardStyles__MainInfoNameHeader-sc-18miw4v-7>span').text(),
-					price: $(elem).find('.CardStyles__PriceInfoNumber-sc-18miw4v-8').text(),
-					published: $(elem).find('.CardStyles__AdditionalInfoHeader-sc-18miw4v-10:nth-child(3)>span').text().split(' ')[1],
-					end: $(elem).find('.CardStyles__AdditionalInfoHeader-sc-18miw4v-10:nth-child(3)>span').text().split(' ')[3],
-					link: 'https://zakupki.mos.ru' + $(elem).find('a.CardStyles__MainInfoNameHeader-sc-18miw4v-7').attr('href'),
-				}
+		for (let query of queries) {
+			const url = new UrlEncode(query).url;
+			const page = await browser.newPage();
+			page.setDefaultNavigationTimeout(0);
+			//await page.waitForTimeout(3000);
+			await page.goto(url, { waitUntil: 'networkidle2' });
+			//await page.setViewport({ width: 1263, height: 930 })
+			//await page.screenshot({ path: 'page.png' });					
+			//await page.pdf({ path: `page ${query}.pdf`, printBackground: true, width: '1263px', height: '930px' });
+			const HTML = await page.content();
+			const $ = cheerio.load(HTML);
 
-				if (
-					!parseResults.filter((parseResult) => parseResult.link == result.link).length
-					//Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
-				) {
-					if (result.published === date || date === '*') {
-						//Фильтр по дате, если дата не указана выводятся все даты
-						const isCustomer = customer
-							? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
-							: undefined;
-						if (isCustomer || customer === undefined) {
-							//Фильтр по наименованию клиента
-							data.push(result);
+			count--;
+			await page.close();
+			if (count == 0) await browser.close();
+
+			let data = [];
+
+			const isExsist = !$('body').text().includes('Ничего не нашлось');
+
+			if (isExsist) {
+				$('.PublicListStyles__PublicListContentContainer-sc-1q0smku-1>div').each((i, elem) => {
+					const result = {
+						number: $(elem).find('a.CardStyles__MainInfoNumberHeader-sc-18miw4v-3>span').text(),
+						type: $(elem).find('.CardStyles__FlexContainer-sc-18miw4v-0>span').text(),
+						law: $(elem).find('.CardStyles__AdditionalInfoHeader-sc-18miw4v-10:nth-child(2)>span').text(),
+						status: $(elem).find('.CardStyles__MainInfoStateIndicator-sc-18miw4v-4>div.content').text(),
+						customer: $(elem).find('.PurchaseCardStyles__MainInfoCustomerHeader-sc-3hfhop-0').text(),
+						description: $(elem).find('a.CardStyles__MainInfoNameHeader-sc-18miw4v-7>span').text(),
+						price: $(elem).find('.CardStyles__PriceInfoNumber-sc-18miw4v-8').text(),
+						published: $(elem).find('.CardStyles__AdditionalInfoHeader-sc-18miw4v-10:nth-child(3)>span').text().split(' ')[1],
+						end: $(elem).find('.CardStyles__AdditionalInfoHeader-sc-18miw4v-10:nth-child(3)>span').text().split(' ')[3],
+						link: 'https://zakupki.mos.ru' + $(elem).find('a.CardStyles__MainInfoNameHeader-sc-18miw4v-7').attr('href'),
+					}
+
+					if (
+						!parseResults.filter((parseResult) => parseResult.link == result.link).length
+						//Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+					) {
+						if (result.published === date || date === '*') {
+							//Фильтр по дате, если дата не указана выводятся все даты
+							const isCustomer = customer
+								? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
+								: undefined;
+							if (isCustomer || customer === undefined) {
+								//Фильтр по наименованию клиента
+								data.push(result);
+							}
 						}
 					}
-				}
-				parseResults.push(result);
+					parseResults.push(result);
 
-				data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
-			});
-		} else {
-			console.log(`Zakupki Mos — Нет доступных результатов по ключевому запросу "${query}"\n`);
+					data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
+				});
+			} else {
+				console.log(`Zakupki Mos — Нет доступных результатов по ключевому запросу "${query}"\n`);
+			}
+			console.log(
+				data.length > 0
+					? data
+					: `Zakupki Mos — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}"\n`,
+			);
 		}
-
-		console.log(
-			data.length > 0
-				? data
-				: `Zakupki Mos — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}"\n`,
-		);
-
 	};
 
-	queries.forEach((query) => {
-		const url = new UrlEncode(query).url;
-		parseData(url, minPrice, query);
-	});
+	parseData(minPrice, queries);
 }
 
 export { parserZakupkiMos }

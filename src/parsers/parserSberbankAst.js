@@ -8,7 +8,7 @@ const parserSberbankAst = () => {
 
 	const args = getArgs(argv);
 
-	const minPrice = args.s ? args.s : 300000;
+	const minPrice = args.s ? args.s : 0;
 
 	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
 
@@ -31,6 +31,7 @@ const parserSberbankAst = () => {
 			'Проездных документов ',
 			'Бронирование билетов',
 			'Оформление авиабилетов',
+			'Служебных командирований',
 			'Командированию сотрудников',
 			'Служебных командировок',
 			'Проживание экипажей',
@@ -48,7 +49,7 @@ const parserSberbankAst = () => {
 		const browser = await puppeteer.launch({
 			headless: true, // false: enables one to view the Chrome instance in action
 			//defaultViewport: { width: 1263, height: 930 }, // optional
-			//slowMo: 25
+			slowMo: 25
 		});
 
 		let count = queries.length;
@@ -56,9 +57,12 @@ const parserSberbankAst = () => {
 		for (let query of queries) {
 
 			const page = await browser.newPage();
+			page.setDefaultNavigationTimeout(0);
+			//await page.waitForTimeout(3000);
 			await page.goto('https://www.sberbank-ast.ru', { waitUntil: 'networkidle2' });
 			await page.waitForSelector('#txtUnitedPurchaseSearch');
 			await page.focus('#txtUnitedPurchaseSearch');
+			await page.waitForTimeout(1000);
 			await page.keyboard.type(query);
 			await page.click('#btnUnitedPurchaseSearch');
 			await page.waitForTimeout(3000);
@@ -74,43 +78,51 @@ const parserSberbankAst = () => {
 			await page.close();
 			if (count == 0) await browser.close();
 
-			let data = [];
-
 			const $ = cheerio.load(html);
 
+			const isExsist = !$('body').text().includes('Нет результатов для данной настройки поиска');
 
-			$('.purch-reestr-tbl-div').each((i, elem) => {
+			let data = [];
 
-				const result = {
-					number: $(elem).find('.es-el-code-term').text(),
-					section: $(elem).find('.es-el-source-term').text(),
-					type: $(elem).find('.es-el-type-name').text(),
-					status: $(elem).find('div.BidStateName').text(),
-					customer: $(elem).find('.es-el-org-name').text(),
-					description: $(elem).find('.es-el-name').text().replace(/\n/g, ' '),
-					price: $(elem).find('.es-el-amount').text().replace(/\s{2,}/g, ' ') || '0.00',
-					published: $(elem).find('tr:first-child>td:last-child>table>tbody>tr:first-child>td:last-child>span').text().split(' ')[0],
-					end: $(elem).find('tr:first-child>td:last-child>table>tbody>tr:nth-child(3)>td:last-child>div>span').text().split(' ')[0],
-					link: $(elem).find('tr:nth-child(1)>td:nth-child(2)>div:nth-child(1)>input:nth-child(4)').attr('value'),
-				};
-				if (
-					!parseResults.filter((parseResult) => parseResult.link == result.link).length
-					//Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
-				) {
-					if (result.published === date || date === '*') {
-						//Фильтр по дате, если дата не указана выводятся все даты
-						const isCustomer = customer
-							? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
-							: undefined;
-						if (isCustomer || customer === undefined) {
-							//Фильтр по наименованию клиента
-							data.push(result);
+			if (isExsist) {
+				$('.purch-reestr-tbl-div').each((i, elem) => {
+
+					const result = {
+						number: $(elem).find('.es-el-code-term').text(),
+						section: $(elem).find('.es-el-source-term').text(),
+						type: $(elem).find('.es-el-type-name').text(),
+						status: $(elem).find('div.BidStateName').text() || $(elem).find('div.PurchStateName').text(),
+						customer: $(elem).find('.es-el-org-name').text(),
+						description: $(elem).find('.es-el-name').text().replace(/\n/g, ' '),
+						price: $(elem).find('.es-el-amount').text().replace(/\s{2,}/g, ' ') || '0.00',
+						published: $(elem).find('tr:first-child>td:last-child>table>tbody>tr:first-child>td:last-child>span').text().split(' ')[0],
+						end: $(elem).find('tr:first-child>td:last-child>table>tbody>tr:nth-child(3)>td:last-child>div>span').text().split(' ')[0],
+						link: $(elem).find('tr:nth-child(1)>td:nth-child(2)>div:nth-child(1)>input:nth-child(4)').attr('value'),
+						query: query,
+					};
+
+					if (
+						!parseResults.filter((parseResult) => parseResult.link == result.link).length
+						//Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+					) {
+						if (result.published === date || date === '*') {
+							//Фильтр по дате, если дата не указана выводятся все даты
+							const isCustomer = customer
+								? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
+								: undefined;
+							if (isCustomer || customer === undefined) {
+								//Фильтр по наименованию клиента
+								data.push(result);
+							}
 						}
+						data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 					}
-					data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
-				}
-				parseResults.push(result);
-			});
+					parseResults.push(result);
+				});
+
+			} else {
+				console.log(`Sberbank AST — Нет доступных результатов по ключевому запросу "${query}"\n`);
+			}
 			console.log(
 				data.length > 0
 					? data
