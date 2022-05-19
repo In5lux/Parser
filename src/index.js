@@ -6,6 +6,7 @@ import { parserFabrikant } from './parsers/parserFabrikant.js';
 import { parserZakupkiMos } from './parsers/parserZakupkiMos.js';
 import { parserSberbankAst } from './parsers/parserSberbankAst.js';
 import { parserB2BCenter } from './parsers/parserB2BCenter.js';
+import { parserLOTonline } from './parsers/parserLOTonline.js';
 
 parserZakupkiGov();
 parserRosatom();
@@ -15,3 +16,4 @@ parserFabrikant();
 parserZakupkiMos();
 parserSberbankAst();
 parserB2BCenter();
+parserLOTonline();
