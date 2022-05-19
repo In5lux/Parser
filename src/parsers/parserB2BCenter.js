@@ -47,7 +47,7 @@ const parserB2BCenter = () => {
 
 		const browser = await puppeteer.launch({
 			headless: true, // false: enables one to view the Chrome instance in action
-			//defaultViewport: { width: 1263, height: 930 }, // optional
+			defaultViewport: { width: 1400, height: 700 }, // optional
 			slowMo: 25
 		});
 
@@ -58,15 +58,17 @@ const parserB2BCenter = () => {
 			const page = await browser.newPage();
 			page.setDefaultNavigationTimeout(0);
 			//await page.waitForTimeout(3000);
-			await page.goto('https://www.b2b-center.ru', { waitUntil: 'networkidle2', slowMo: 25 });
+			await page.goto('https://www.b2b-center.ru/market/', { waitUntil: 'networkidle2' });
 			// await page.waitForSelector('#lfm0');
 			// await page.focus('#lfm0');
-			await page.waitForSelector('#f_keyword_above');
-			await page.focus('#f_keyword_above');
+			await page.waitForTimeout(3000);
+			await page.waitForSelector('#f_keyword');
+			await page.focus('#f_keyword');
 			await page.keyboard.type(query);
+
+			await page.click('#search_button');
 			//await page.keyboard.down('Tab');
-			await page.keyboard.down('Tab');
-			await page.keyboard.down('Enter');
+			//await page.keyboard.down('Enter');
 			await page.waitForTimeout(3000);
 			//await page.screenshot({ path: `page ${query}.png` });
 
