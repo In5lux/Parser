@@ -7,13 +7,17 @@ import { parserZakupkiMos } from './parsers/parserZakupkiMos.js';
 import { parserSberbankAst } from './parsers/parserSberbankAst.js';
 import { parserB2BCenter } from './parsers/parserB2BCenter.js';
 import { parserLOTonline } from './parsers/parserLOTonline.js';
+import { parserRoseltorg } from './parsers/parserRoseltorg.js';
 
+parserRoseltorg();
+parserB2BCenter();
+parserZakupkiMos();
+parserSberbankAst();
+parserLOTonline();
 parserZakupkiGov();
 parserRosatom();
 parserZakazRF();
-parserEtpEts();
 parserFabrikant();
-parserZakupkiMos();
-parserSberbankAst();
-parserB2BCenter();
-parserLOTonline();
+parserEtpEts();
+
+

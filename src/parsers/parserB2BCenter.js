@@ -72,13 +72,7 @@ const parserB2BCenter = () => {
 			await page.waitForTimeout(3000);
 			//await page.screenshot({ path: `page ${query}.png` });
 
-			const html = await page.evaluate(() => {
-				try {
-					return document.documentElement.outerHTML;
-				} catch (e) {
-					return e.toString();
-				}
-			});
+			const html = await page.content();
 			count--;
 			await page.close();
 			if (count == 0) await browser.close();
