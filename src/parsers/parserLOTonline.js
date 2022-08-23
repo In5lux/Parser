@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 import cheerio from 'cheerio';
+import { myEmitter } from '../index.js'
 
 const parserLOTonline = () => {
 
@@ -17,8 +18,8 @@ const parserLOTonline = () => {
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
 	console.log(
-		`Lot-online — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}`,
+		`\nLot-online — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
+		} с минимальной суммой контракта ${minPrice}\n`,
 	);
 
 	class UrlEncode {
@@ -36,14 +37,21 @@ const parserLOTonline = () => {
 			'Проездных документов ',
 			'Бронирование авиабилетов',
 			'Оформление авиабилетов',
+			'Билетного аутсорсинга'
 		];
 
 	let parseResults = [];
 
 	const parseData = async (minPrice, queries) => {
+
+		const browserFetcher = puppeteer.createBrowserFetcher();
+		const revisionInfo = await browserFetcher.download('991974');
+
 		const browser = await puppeteer.launch({
+			executablePath: revisionInfo.executablePath,
 			headless: true, // false: enables one to view the Chrome instance in action
-			//defaultViewport: { width: 1263, height: 930 }, // (optional)
+			//defaultViewport: { width: 1263, height: 930 }, // optional
+			slowMo: 25
 		});
 
 		let count = queries.length;
@@ -66,9 +74,7 @@ const parserLOTonline = () => {
 
 			const $ = cheerio.load(html);
 
-			count--;
 			await page.close();
-			if (count == 0) await browser.close();
 
 			let data = [];
 
@@ -83,7 +89,7 @@ const parserLOTonline = () => {
 						status: $(elem).find('.card-div__procedureStatus span:nth-child(2)').text().trim(),
 						customer: $(elem).find('div>div:nth-child(3)>div.col-12.col-md-8>div>div:nth-child(2)').text().trim(),
 						description: $(elem).find('div>div.row.col-12.mb-2.mt-4.pl-md-0>div.col-12.col-md-8>div.row.col-12.p-md-0.mx-md-0.__purchaseObjectInfo>p').text().replace(/[\n\t]/g, ' ').trim(),
-						price: $(elem).find('.card-div__maxSum').text().trim(),
+						price: $(elem).find('.card-div__maxSumTitle').text(),
 						published: $(elem).find('.__publication-date').text().split(' ')[1],
 						end: $(elem).find('div>div.row.col-12.mb-2.mt-4.pl-md-0>div.col-12.col-md-4.pl-md-0.card-div__procedureStatus.ng-star-inserted>span:nth-child(4)').text().split(' ')[4] || '—',
 						link: 'https://gz.lot-online.ru' + $(elem).find('a.__link_purchase-number').attr('href'),
@@ -114,15 +120,21 @@ const parserLOTonline = () => {
 			} else {
 				console.log(`Lot-online — Нет доступных результатов по ключевому запросу "${query}"\n`);
 			}
+			console.log(`Lot-online — ${query} (${count})`);
+			count--;
+
 			console.log(
 				data.length > 0
 					? data
 					: `Lot-online — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}"\n`,
 			);
+			if (count == 0) {
+				await browser.close();
+				myEmitter.emit('next');
+			};
 		}
 	};
-
 	parseData(minPrice, queries);
-}
+};
 
 export { parserLOTonline }

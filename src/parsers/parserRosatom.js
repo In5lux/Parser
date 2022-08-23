@@ -3,6 +3,7 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
+import { myEmitter } from '../index.js'
 
 const parserRosatom = () => {
 	const args = getArgs(argv);
@@ -31,6 +32,8 @@ const parserRosatom = () => {
 		'Служебных поездок',
 		'Авиабилетов',
 		'Авиационных билетов',
+		'Организации воздушных перевозок',
+		'Перевозкам воздушным транспортом',
 		'Железнодорожных билетов',
 		'Служебных командировок',
 		'Командированию сотрудников',
@@ -38,11 +41,14 @@ const parserRosatom = () => {
 		'Оказание услуг по организации командирования',
 		'Транспортного обслуживания',
 		'Протокольных мероприятий',
+		'Билетного аутсорсинга'
 	];
+
+	let countQueries = queries.length;
 
 	let parseResults = [];
 
-	console.log('Rosatom: результаты поиска');
+	console.log('\nRosatom: результаты поиска\n');
 
 	const parseData = (html, minPrice, query) => {
 		let data = [];
@@ -60,7 +66,6 @@ const parserRosatom = () => {
 			};
 
 			const yearPublished = result.published.split('.')[2];
-
 
 			if (
 				parseResults.filter((parseResult) => parseResult.link == result.link).length == 0 &&
@@ -83,11 +88,18 @@ const parserRosatom = () => {
 			data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 		});
 
+		console.log(`Rosatom — ${query} (${countQueries})`);
+		countQueries--;
+
 		console.log(
 			data.length > 0
 				? data
 				: `Rosatom — нет результатов на дату ${year ? year : date} с минимальной ценой контракта ${minPrice} по запросу «${query}»`,
 		);
+
+		if (countQueries == 0) {
+			myEmitter.emit('next');
+		};
 	};
 
 	const getData = (query) => {
@@ -97,11 +109,15 @@ const parserRosatom = () => {
 			.then((res) => {
 				parseData(res.data, minPrice, query);
 			})
-			.catch((err) => console.log('Rosatom — ' + query + ' — ' + err.message));
+			.catch((err) => {
+				console.log('Rosatom — ' + query + ' — ' + err.message);
+				myEmitter.emit('next');
+			});
 	};
 
-	queries.forEach((query) => getData(query));
-
+	for (let query of queries) {
+		getData(query);
+	};
 };
 
 export { parserRosatom }

@@ -3,6 +3,7 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
+import { myEmitter } from '../index.js'
 
 const parserSberbankAst = () => {
 
@@ -16,9 +17,8 @@ const parserSberbankAst = () => {
 
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
-	console.log(
-		`Sberbank AST — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}`,
+	console.log(`\nSberbank AST — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
+		} с минимальной суммой контракта ${minPrice}\n`,
 	);
 
 	const queries = args.q
@@ -37,16 +37,23 @@ const parserSberbankAst = () => {
 			'Проживание экипажей',
 			'Обеспечение авиабилетами',
 			'Обеспечение авиационными билетами',
+			'Организации воздушных перевозок',
+			'Перевозкам воздушным транспортом',
 			'Пассажирские авиаперевозки иностранных граждан',
 			'Оказание услуг связанных с бронированием',
 			'Оказание услуг по организации командирования',
+			'Билетного аутсорсинга'
 		];
 
 	let parseResults = [];
 
 	const parseData = async (minPrice, queries) => {
 
+		const browserFetcher = puppeteer.createBrowserFetcher();
+		const revisionInfo = await browserFetcher.download('991974');
+
 		const browser = await puppeteer.launch({
+			executablePath: revisionInfo.executablePath,
 			headless: true, // false: enables one to view the Chrome instance in action
 			//defaultViewport: { width: 1263, height: 930 }, // optional
 			slowMo: 25
@@ -74,9 +81,8 @@ const parserSberbankAst = () => {
 					return e.toString();
 				}
 			});
-			count--;
+
 			await page.close();
-			if (count == 0) await browser.close();
 
 			const $ = cheerio.load(html);
 
@@ -123,14 +129,21 @@ const parserSberbankAst = () => {
 			} else {
 				console.log(`Sberbank AST — Нет доступных результатов по ключевому запросу "${query}"\n`);
 			}
+			console.log(`Sberbank AST — ${query} (${count})`);
+			count--;
+
 			console.log(
 				data.length > 0
 					? data
 					: `Sberbank AST — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}"\n`,
 			);
+			if (count == 0) {
+				await browser.close();
+				myEmitter.emit('next');
+			};
 		}
 	};
 	parseData(minPrice, queries);
-}
+};
 
 export { parserSberbankAst }

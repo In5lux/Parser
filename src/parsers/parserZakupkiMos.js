@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 import cheerio from 'cheerio';
+import { myEmitter } from '../index.js'
 
 const parserZakupkiMos = () => {
 
@@ -17,8 +18,8 @@ const parserZakupkiMos = () => {
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
 	console.log(
-		`Zakupki Mos — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}`,
+		`\nZakupki Mos — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
+		} с минимальной суммой контракта ${minPrice}\n`,
 	);
 
 	class UrlEncode {
@@ -41,9 +42,15 @@ const parserZakupkiMos = () => {
 	let parseResults = [];
 
 	const parseData = async (minPrice, queries) => {
+
+		const browserFetcher = puppeteer.createBrowserFetcher();
+		const revisionInfo = await browserFetcher.download('991974');
+
 		const browser = await puppeteer.launch({
+			executablePath: revisionInfo.executablePath,
 			headless: true, // false: enables one to view the Chrome instance in action
-			//defaultViewport: { width: 1263, height: 930 }, // (optional)
+			//defaultViewport: { width: 1263, height: 930 }, // optional
+			slowMo: 25
 		});
 
 		let count = queries.length;
@@ -60,9 +67,7 @@ const parserZakupkiMos = () => {
 			const HTML = await page.content();
 			const $ = cheerio.load(HTML);
 
-			count--;
 			await page.close();
-			if (count == 0) await browser.close();
 
 			let data = [];
 
@@ -105,11 +110,18 @@ const parserZakupkiMos = () => {
 			} else {
 				console.log(`Zakupki Mos — Нет доступных результатов по ключевому запросу "${query}"\n`);
 			}
+			console.log(`Zakupki Mos —  ${query} (${count})`);
+			count--;
+
 			console.log(
 				data.length > 0
 					? data
 					: `Zakupki Mos — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}"\n`,
 			);
+			if (count == 0) {
+				await browser.close();
+				myEmitter.emit('next');
+			};
 		}
 	};
 

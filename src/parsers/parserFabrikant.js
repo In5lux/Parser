@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 import { dateFormat } from '../helpers/dateFormatter.js';
+import { myEmitter } from '../index.js'
 
 const parserFabrikant = () => {
 
@@ -20,8 +21,8 @@ const parserFabrikant = () => {
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
 	console.log(
-		`Fabrikant — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}`,
+		`\nFabrikant — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
+		} с минимальной суммой контракта ${minPrice}\n`,
 	);
 
 	class UrlEncode {
@@ -38,9 +39,12 @@ const parserFabrikant = () => {
 			'Организация деловых поездок',
 			'Служебных поездок',
 			'Выдворение',
+			'Перевозок департируемых',
 			'Проездных документов ',
 			'Бронирование билетов',
 			'Оформление авиабилетов',
+			'Организации воздушных перевозок',
+			'Перевозкам воздушным транспортом',
 			'Служебных командирований',
 			'Командированию сотрудников',
 			'Служебных командировок',
@@ -50,7 +54,10 @@ const parserFabrikant = () => {
 			'Пассажирские авиаперевозки иностранных граждан',
 			'Оказание услуг связанных с бронированием',
 			'Оказание услуг по организации командирования',
+			'Билетного аутсорсинга'
 		];
+
+	let countQueries = queries.length;
 
 	let parseResults = [];
 
@@ -102,14 +109,19 @@ const parserFabrikant = () => {
 
 				data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 			});
-		}
+		};
 
+		console.log(`Fabrikant — ${query} (${countQueries})`);
+		countQueries--;
 
 		console.log(
 			data.length > 0
 				? data
 				: `Fabrikant — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}"\n`,
 		);
+		if (countQueries == 0) {
+			myEmitter.emit('next');
+		};
 	};
 
 	const getData = (query) => {
@@ -119,12 +131,16 @@ const parserFabrikant = () => {
 			.then((res) => {
 				parseData(res.data, minPrice, query);
 			})
-			.catch((err) => console.log('Fabrikant — ' + query + ' — ' + err.message));
+			.catch((err) => {
+				console.log('Fabrikant — ' + query + ' — ' + err.message);
+				myEmitter.emit('next');
+			});
 	};
 
-	queries.forEach((query) => getData(query));
-
-}
+	for (let query of queries) {
+		getData(query)
+	};
+};
 
 
 export { parserFabrikant }

@@ -3,6 +3,7 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
+import { myEmitter } from '../index.js'
 
 const parserRoseltorg = () => {
 
@@ -15,8 +16,8 @@ const parserRoseltorg = () => {
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
 	console.log(
-		`Roseltorg — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}`,
+		`\nRoseltorg — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
+		} с минимальной суммой контракта ${minPrice}\n`,
 	);
 
 	class UrlEncode {
@@ -38,10 +39,10 @@ const parserRoseltorg = () => {
 			'Железнодорожных билетов',
 			'Командировок',
 			'Командирований',
-			'Гостиничные услуги',
 			'Обеспечение авиационными билетами',
-			'Продажа авиабилетов',
 			'Авиаперевозки',
+			'Билетного аутсорсинга',
+			'Безденежному оформлению и предоставлению'
 		];
 
 	let parseResults = [];
@@ -141,15 +142,21 @@ const parserRoseltorg = () => {
 				});
 				data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 			}
-			count--;
+
 			await page.close();
-			if (count == 0) await browser.close();
+
+			console.log(`Roseltorg — ${query} (${count})`);
+			count--;
 
 			console.log(
 				data.length > 0
 					? data
 					: `Roseltorg — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}"\n`,
 			);
+			if (count == 0) {
+				await browser.close();
+				myEmitter.emit('next');
+			};
 		}
 	};
 	parseData(date, minPrice, queries);

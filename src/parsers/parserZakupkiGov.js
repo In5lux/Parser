@@ -3,7 +3,7 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-
+import { myEmitter } from '../index.js'
 
 const parserZakupkiGov = () => {
 
@@ -23,18 +23,18 @@ const parserZakupkiGov = () => {
 
 	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
 
-	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)" -c "наименование заказчика"
+	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)" -c "наименование заказчика" -a "все закупки, включая архивные"
 
 	console.log(
-		`Результаты на ${date === '*' ? 'все опубликованные активные закупки' : date
-		} с минимальной суммой контракта ${minPrice}`,
+		`\nРезультаты на ${date === '*' ? 'все опубликованные активные закупки' : date
+		} с минимальной суммой контракта ${minPrice}\n`,
 	);
 
 	class UrlEncode {
 		constructor(query) {
-			this.query = query;
+			this.query = query.toLowerCase();
 			this.url = `https://zakupki.gov.ru/epz/order/extendedsearch/results.html?searchString=${encodeURIComponent(
-				this.query,
+				this.query
 			)}&morphology=on&search-filter=%D0%94%D0%B0%D1%82%D0%B5+%D1%80%D0%B0%D0%B7%D0%BC%D0%B5%D1%89%D0%B5%D0%BD%D0%B8%D1%8F&pageNumber=1&sortDirection=false&recordsPerPage=_50&showLotsInfoHidden=false&sortBy=UPDATE_DATE&fz44=on&fz223=on&af=on&currencyIdGeneral=-1`;
 		}
 	}
@@ -45,8 +45,10 @@ const parserZakupkiGov = () => {
 			'Оказания услуг по бронированию, оформлению, продаже, обмену и возврату авиабилетов',
 			'Организация командировок',
 			'Организация деловых поездок',
+			'Командировки',
 			'Служебных поездок',
 			'Выдворение',
+			'Перевозок департируемых',
 			'Проездных документов ',
 			'Бронирование билетов',
 			'Оформление авиабилетов',
@@ -59,20 +61,27 @@ const parserZakupkiGov = () => {
 			'Проживание экипажей',
 			'Обеспечение авиабилетами',
 			'Обеспечение авиационными билетами',
+			'Организации воздушных перевозок',
+			'Перевозкам воздушным транспортом',
 			'Бронирование мест на авиарейсы, оформлению и продаже авиабилетов',
 			'Пассажирские авиаперевозки иностранных граждан',
 			'Оказание услуг связанных с бронированием',
 			'Оказание услуг по реализации авиа, ж/д билетов',
 			'Оказание услуг по организации командирования',
-			// 'Деловых мероприятий',
-			// 'Протокольных мероприятий',
+			'Билетного аутсорсинга',
+			'Деловых мероприятий',
+			'Протокольных мероприятий',
+			'Безденежному оформлению и предоставлению'
 		];
+
+	let countQueries = queries.length;
 
 	let parseResults = [];
 
 	const parseData = (html, minPrice, query) => {
 		let data = [];
 		const $ = cheerio.load(html);
+
 
 		$('.search-registry-entry-block').each((i, elem) => {
 			const result = {
@@ -107,7 +116,14 @@ const parserZakupkiGov = () => {
 
 			data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 		});
+		console.log(`Zakupki Gov — ${query} (${countQueries})`);
+		countQueries--;
+
 		console.log(data.length > 0 ? data : `Zakupki Gov — Нет результатов удовлетворяющих критериям поиска на ${date} с минимальной ценой ${minPrice} по запросу «${query}»`);
+
+		if (countQueries == 0) setTimeout(() => {
+			myEmitter.emit('next');
+		}, 1500);
 	};
 
 	const countPages = (html, url) => {
@@ -126,7 +142,7 @@ const parserZakupkiGov = () => {
 					console.log(
 						`\nZakupki Gov — Количество страниц по запросу "${query}" — 1` + `\nСтраница 1 по запросу ${query}`,
 					);
-					parseData(res.data, minPrice, query);
+					setTimeout(() => parseData(res.data, minPrice, query), 1000);
 				} else {
 					for (let i = 1; i <= pages; i++) {
 						let newUrl = url.replace(/pageNumber=\d/, `pageNumber=${i}`);
@@ -141,11 +157,17 @@ const parserZakupkiGov = () => {
 					}
 				}
 			})
-			.catch((err) => console.log('Zakupki Gov — ' + query + ' — ' + err.message));
+			.catch((err) => {
+				console.log('Zakupki Gov — ' + query + ' — ' + err.message + '\n');
+				setTimeout(() => {
+					myEmitter.emit('next');
+				}, 200);
+			});
 	};
 
-	queries.forEach((query) => getData(query));
-
+	for (let query of queries) {
+		getData(query);
+	};
 };
 
 export { parserZakupkiGov }

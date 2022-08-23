@@ -3,6 +3,7 @@ import cheerio from 'cheerio';
 import { format, lastDayOfDecade } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
+import { myEmitter } from '../index.js'
 
 const parserB2BCenter = () => {
 
@@ -16,9 +17,8 @@ const parserB2BCenter = () => {
 
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
-	console.log(
-		`B2B Center — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}`,
+	console.log(`\nB2B Center — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
+		} с минимальной суммой контракта ${minPrice}\n`,
 	);
 
 	const queries = args.q
@@ -56,28 +56,28 @@ const parserB2BCenter = () => {
 		for (let query of queries) {
 
 			const page = await browser.newPage();
-			page.setDefaultNavigationTimeout(0);
-			//await page.waitForTimeout(3000);
+			//page.setDefaultNavigationTimeout(0);			
 			await page.goto('https://www.b2b-center.ru/market/', { waitUntil: 'networkidle2' });
 			// await page.waitForSelector('#lfm0');
-			// await page.focus('#lfm0');
-			await page.waitForTimeout(3000);
+			// await page.focus('#lfm0');			
 			await page.waitForSelector('#f_keyword');
 			await page.focus('#f_keyword');
+			await page.waitForTimeout(1000);
 			await page.keyboard.type(query);
-
+			await page.waitForTimeout(2000);
 			await page.click('#search_button');
 			//await page.keyboard.down('Tab');
 			//await page.keyboard.down('Enter');
-			await page.waitForTimeout(3000);
 			//await page.screenshot({ path: `page ${query}.png` });
-
+			await page.waitForTimeout(2000);
 			const html = await page.content();
-			count--;
-			await page.close();
-			if (count == 0) await browser.close();
 
 			const $ = cheerio.load(html);
+
+
+			await page.waitForTimeout(2000);
+			await page.close();
+
 
 			const isExsist = !$('body').text().includes('нет актуальных торговых процедур');
 
@@ -95,6 +95,10 @@ const parserB2BCenter = () => {
 						end: $(elem).find('td:last-child').text().split(' ')[0],
 						link: $(elem).find('td:first-child>a').attr('href'),
 					};
+
+					if (!result.link.startsWith('https')) {
+						result.link = 'https://www.b2b-center.ru' + result.link
+					}
 
 					if (
 						!parseResults.filter((parseResult) => parseResult.number == result.number).length
@@ -117,11 +121,18 @@ const parserB2BCenter = () => {
 			} else {
 				console.log(`B2B Center — Нет доступных результатов по ключевому запросу "${query}"\n`);
 			}
+			console.log(`B2B Center — ${query} (${count})`);
+			count--;
+
 			console.log(
 				data.length > 0
 					? data
 					: `B2B Center — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}"\n`,
 			);
+			if (count == 0) {
+				await browser.close();
+				myEmitter.emit('next');
+			};
 		}
 	};
 	parseData(minPrice, queries);

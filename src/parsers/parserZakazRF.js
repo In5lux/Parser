@@ -3,6 +3,7 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
+import { myEmitter } from '../index.js'
 
 const parserZakazRF = () => {
 
@@ -37,6 +38,8 @@ const parserZakazRF = () => {
 			'Бронирование билетов',
 			'Оформление авиабилетов',
 			'Авиационных билетов',
+			'Организации воздушных перевозок',
+			'Перевозкам воздушным транспортом',
 			'Железнодорожных билетов',
 			'Служебных командировок',
 			'Служебных командирований',
@@ -50,13 +53,16 @@ const parserZakazRF = () => {
 			'Оказание услуг по организации командирования',
 			'Деловых мероприятий',
 			'Протокольных мероприятий',
+			'Билетного аутсорсинга'
 		];
+
+	let countQueries = queries.length;
 
 	let parseResults = [];
 
 	console.log(
-		`ZakazRF: Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}`,
+		`\nZakazRF: Результаты на ${date === '*' ? 'все опубликованные закупки' : date
+		} с минимальной суммой контракта ${minPrice}\n`,
 	);
 
 	const parseData = (html, minPrice, query) => {
@@ -101,6 +107,10 @@ const parserZakazRF = () => {
 				data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 			}
 		});
+
+		console.log(`ZakazRF — ${query} (${countQueries})`);
+		countQueries--;
+
 		if (!isNotExist) {
 			console.log(
 				data.length > 0
@@ -108,6 +118,9 @@ const parserZakazRF = () => {
 					: `ZakazRF — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}"\n`,
 			);
 		}
+		if (countQueries == 0) {
+			myEmitter.emit('next');
+		};
 	};
 
 	const getData = (query) => {
@@ -117,11 +130,15 @@ const parserZakazRF = () => {
 			.then((res) => {
 				parseData(res.data, minPrice, query);
 			})
-			.catch((err) => console.log('ZakazRF — ' + query + ' — ' + err.message));
+			.catch((err) => {
+				console.log('ZakazRF — ' + query + ' — ' + err.message);
+				myEmitter.emit('next');
+			});
 	};
 
-	queries.forEach((query) => getData(query));
-
+	for (let query of queries) {
+		getData(query)
+	};
 };
 
 export { parserZakazRF }
