@@ -13,12 +13,7 @@ const parserEtpEts = () => {
 
 	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
 
-	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
-
-	console.log(
-		`\nEtp Ets 44 — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}\n`,
-	);
+	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"	
 
 	class UrlEncode {
 		constructor(query) {
@@ -58,6 +53,11 @@ const parserEtpEts = () => {
 	let countQueries = queries.length;
 
 	let parseResults = [];
+
+	console.log(
+		`\nEtp Ets 44 — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
+		} с минимальной суммой контракта ${minPrice}\n`,
+	);
 
 	const parseData = (html, minPrice, query) => {
 		let data = [];
@@ -102,21 +102,15 @@ const parserEtpEts = () => {
 
 				data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 			}
+
 		});
-
-		console.log(`Etp Ets 44 — ${query} (${countQueries})`);
-		countQueries--;
-
 		if (!isNotExist) {
-			console.log(
-				data.length > 0
-					? data
-					: `Etp Ets 44 — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}"\n`,
-			);
+			if (data.length > 0) {
+				console.log(data);
+			} else {
+				console.log(`Etp Ets 44 — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}" (${countQueries})\n`);
+			}
 		}
-		if (countQueries == 0) {
-			myEmitter.emit('next');
-		};
 	};
 
 	const getData = (query) => {
@@ -128,8 +122,13 @@ const parserEtpEts = () => {
 				parseData(res.data, minPrice, query);
 			})
 			.catch((err) => {
-				console.log('EtpEts 44 — ' + query + ' — ' + err.message);
-				myEmitter.emit('next');
+				console.log(`EtpEts 44 — ${query} (${countQueries}) — ${err.message}`);
+			})
+			.finally(() => {
+				countQueries--;
+				if (countQueries == 0) setTimeout(() => {
+					myEmitter.emit('next');
+				}, 3000);
 			});
 	};
 

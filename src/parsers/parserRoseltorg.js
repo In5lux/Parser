@@ -13,12 +13,7 @@ const parserRoseltorg = () => {
 
 	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
 
-	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
-
-	console.log(
-		`\nRoseltorg — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}\n`,
-	);
+	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"	
 
 	class UrlEncode {
 		constructor(date, query) {
@@ -46,6 +41,11 @@ const parserRoseltorg = () => {
 		];
 
 	let parseResults = [];
+
+	console.log(
+		`\nRoseltorg — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
+		} с минимальной суммой контракта ${minPrice}\n`,
+	);
 
 	const parseData = async (date, minPrice, queries) => {
 		//const browserFetcher = puppeteer.createBrowserFetcher();
@@ -76,11 +76,10 @@ const parserRoseltorg = () => {
 			let data = [];
 
 			const $ = cheerio.load(html);
-			let isNotExist = $('.search-results__info-text p:first-child').text() == 'По вашему запросу ничего не найдено.';
+			let isExist = !$('.search-results__info-text p:first-child').text() == 'По вашему запросу ничего не найдено.';
 
-			if (isNotExist) {
-				console.log(`Roseltorg — Нет доступных результатов по ключевому запросу "${query}"\n`);
-			} else {
+			if (isExist) {
+
 				const itemLinks = await page.evaluate(() =>
 					Array.from(document.querySelectorAll('.search-results__subject a'), e => e.href)
 				);
@@ -145,17 +144,18 @@ const parserRoseltorg = () => {
 
 			await page.close();
 
-			console.log(`Roseltorg — ${query} (${count})`);
-			count--;
+			if (data.length > 0) {
+				console.log(data);
+			} else {
+				console.log(`Roseltorg — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}" (${count})\n`);
+			}
 
-			console.log(
-				data.length > 0
-					? data
-					: `Roseltorg — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}"\n`,
-			);
+			count--;
 			if (count == 0) {
 				await browser.close();
-				myEmitter.emit('next');
+				setTimeout(() => {
+					myEmitter.emit('next');
+				}, 3000);
 			};
 		}
 	};

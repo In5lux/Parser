@@ -15,12 +15,7 @@ const parserLOTonline = () => {
 
 	const customer = args.c?.toLowerCase();
 
-	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
-
-	console.log(
-		`\nLot-online — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}\n`,
-	);
+	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"	
 
 	class UrlEncode {
 		constructor(query) {
@@ -41,6 +36,11 @@ const parserLOTonline = () => {
 		];
 
 	let parseResults = [];
+
+	console.log(
+		`\nLot-online — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
+		} с минимальной суммой контракта ${minPrice}\n`,
+	);
 
 	const parseData = async (minPrice, queries) => {
 
@@ -118,19 +118,21 @@ const parserLOTonline = () => {
 					data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 				});
 			} else {
-				console.log(`Lot-online — Нет доступных результатов по ключевому запросу "${query}"\n`);
+				console.log(`Lot-online — Нет доступных результатов по ключевому запросу "${query}" (${count})\n`);
 			}
-			console.log(`Lot-online — ${query} (${count})`);
-			count--;
 
-			console.log(
-				data.length > 0
-					? data
-					: `Lot-online — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}"\n`,
-			);
+			if (data.length > 0) {
+				console.log(data);
+			} else {
+				console.log(`Lot-online — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}" (${count})\n`);
+			}
+
+			count--;
 			if (count == 0) {
 				await browser.close();
-				myEmitter.emit('next');
+				setTimeout(() => {
+					myEmitter.emit('next');
+				}, 3000);
 			};
 		}
 	};

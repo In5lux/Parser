@@ -18,12 +18,7 @@ const parserFabrikant = () => {
 
 	const customer = args.c?.toLowerCase();
 
-	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
-
-	console.log(
-		`\nFabrikant — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}\n`,
-	);
+	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"	
 
 	class UrlEncode {
 		constructor(query, active) {
@@ -61,15 +56,18 @@ const parserFabrikant = () => {
 
 	let parseResults = [];
 
+	console.log(
+		`\nFabrikant — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
+		} с минимальной суммой контракта ${minPrice}\n`,
+	);
+
 	const parseData = (html, minPrice, query) => {
 		let data = [];
 		const $ = cheerio.load(html);
 
-		const isNotExsist = $('.Search-result-no')['0']?.name === 'div';
+		const isExsist = !$('.Search-result-no')['0']?.name === 'div';
 
-		if (isNotExsist) {
-			console.log(`Fabrikant — Нет доступных результатов по ключевому запросу "${query}"\n`);
-		} else {
+		if (isExsist) {
 			$('.innerGrid').each((i, elem) => {
 				// isNotExist = $(elem).find('td').text().trim() === '(нет данных)';
 
@@ -111,17 +109,11 @@ const parserFabrikant = () => {
 			});
 		};
 
-		console.log(`Fabrikant — ${query} (${countQueries})`);
-		countQueries--;
-
-		console.log(
-			data.length > 0
-				? data
-				: `Fabrikant — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}"\n`,
-		);
-		if (countQueries == 0) {
-			myEmitter.emit('next');
-		};
+		if (data.length > 0) {
+			console.log(data);
+		} else {
+			console.log(`Fabrikant — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}" (${countQueries})\n`);
+		}
 	};
 
 	const getData = (query) => {
@@ -132,8 +124,13 @@ const parserFabrikant = () => {
 				parseData(res.data, minPrice, query);
 			})
 			.catch((err) => {
-				console.log('Fabrikant — ' + query + ' — ' + err.message);
-				myEmitter.emit('next');
+				console.log(`Fabrikant — ${query} (${countQueries}) — ${err.message}`);
+			})
+			.finally(() => {
+				countQueries--;
+				if (countQueries == 0) setTimeout(() => {
+					myEmitter.emit('next');
+				}, 3000);
 			});
 	};
 

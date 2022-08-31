@@ -13,14 +13,6 @@ const parserZakupkiGov = () => {
 
 	const customer = args.c?.toLowerCase();
 
-	console.log(customer ? `Поиск по клиенту «${customer[0].toUpperCase()}${customer.slice(1)}»` : 'Поиск по всем клиентам');
-
-	console.log(
-		customer
-			? `Результаты поиска по наименованию заказчика «${customer}»`
-			: 'Результаты поиска по всем заказчикам',
-	);
-
 	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
 
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)" -c "наименование заказчика" -a "все закупки, включая архивные"
@@ -40,8 +32,7 @@ const parserZakupkiGov = () => {
 	}
 
 	const queries = args.q
-		? [args.q]
-		: [
+		? [args.q] : [
 			'Оказания услуг по бронированию, оформлению, продаже, обмену и возврату авиабилетов',
 			'Организация командировок',
 			'Организация деловых поездок',
@@ -77,6 +68,8 @@ const parserZakupkiGov = () => {
 	let countQueries = queries.length;
 
 	let parseResults = [];
+
+	console.log(customer ? `Поиск по компании «${customer[0].toUpperCase()}${customer.slice(1)}»` : 'Поиск по всем компаниям');
 
 	const parseData = (html, minPrice, query) => {
 		let data = [];
@@ -116,14 +109,14 @@ const parserZakupkiGov = () => {
 
 			data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 		});
-		console.log(`Zakupki Gov — ${query} (${countQueries})`);
-		countQueries--;
 
-		console.log(data.length > 0 ? data : `Zakupki Gov — Нет результатов удовлетворяющих критериям поиска на ${date} с минимальной ценой ${minPrice} по запросу «${query}»`);
+		//console.log(`Zakupki Gov — ${query} (${countQueries})`);
 
-		if (countQueries == 0) setTimeout(() => {
-			myEmitter.emit('next');
-		}, 1500);
+		if (data.length) {
+			console.log(data);
+		} else {
+			console.log(`Zakupki Gov — Нет результатов удовлетворяющих критериям поиска на ${date} с минимальной ценой ${minPrice} по запросу «${query}» (${countQueries})`);
+		}
 	};
 
 	const countPages = (html, url) => {
@@ -137,19 +130,20 @@ const parserZakupkiGov = () => {
 		axios
 			.get(url)
 			.then((res) => {
+				const count = countQueries;
 				const pages = countPages(res.data, query);
 				if (!pages) {
 					console.log(
-						`\nZakupki Gov — Количество страниц по запросу "${query}" — 1` + `\nСтраница 1 по запросу ${query}`,
+						`\nZakupki Gov — Количество страниц по запросу "${query}" (${count}) — 1` + `\nСтраница 1 по запросу ${query}`,
 					);
-					setTimeout(() => parseData(res.data, minPrice, query), 1000);
+					parseData(res.data, minPrice, query);
 				} else {
 					for (let i = 1; i <= pages; i++) {
 						let newUrl = url.replace(/pageNumber=\d/, `pageNumber=${i}`);
 						//console.log(`НОВАЯ ССЫЛКА  ${newUrl}`);
 						axios.get(newUrl).then((res) => {
 							console.log(
-								`\nZakupki Gov — Количество страниц по запросу "${query}" — ${pages}` +
+								`\nZakupki Gov — Количество страниц по запросу "${query}" (${count}) — ${pages}` +
 								`\nСтраница ${i} по запросу ${query}`,
 							);
 							parseData(res.data, minPrice, query);
@@ -158,10 +152,14 @@ const parserZakupkiGov = () => {
 				}
 			})
 			.catch((err) => {
-				console.log('Zakupki Gov — ' + query + ' — ' + err.message + '\n');
-				setTimeout(() => {
+				const count = countQueries;
+				console.log(`\nZakupki Gov — ${query} (${count}) — ${err.message}\n`);
+			})
+			.finally(() => {
+				countQueries--;
+				if (countQueries == 0) setTimeout(() => {
 					myEmitter.emit('next');
-				}, 200);
+				}, 3000);
 			});
 	};
 

@@ -15,11 +15,7 @@ const parserSberbankAst = () => {
 
 	const customer = args.c?.toLowerCase();
 
-	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
-
-	console.log(`\nSberbank AST — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}\n`,
-	);
+	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"	
 
 	const queries = args.q
 		? [args.q]
@@ -46,6 +42,10 @@ const parserSberbankAst = () => {
 		];
 
 	let parseResults = [];
+
+	console.log(`\nSberbank AST — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
+		} с минимальной суммой контракта ${minPrice}\n`,
+	);
 
 	const parseData = async (minPrice, queries) => {
 
@@ -129,17 +129,19 @@ const parserSberbankAst = () => {
 			} else {
 				console.log(`Sberbank AST — Нет доступных результатов по ключевому запросу "${query}"\n`);
 			}
-			console.log(`Sberbank AST — ${query} (${count})`);
-			count--;
 
-			console.log(
-				data.length > 0
-					? data
-					: `Sberbank AST — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}"\n`,
-			);
+			if (data.length > 0) {
+				console.log(data);
+			} else {
+				console.log(`Sberbank AST — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}" (${count})\n`);
+			}
+
+			count--;
 			if (count == 0) {
 				await browser.close();
-				myEmitter.emit('next');
+				setTimeout(() => {
+					myEmitter.emit('next');
+				}, 3000);
 			};
 		}
 	};

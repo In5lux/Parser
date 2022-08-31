@@ -32,4 +32,6 @@ myEmitter.on('next', () => {
 	!done ? value() : done;
 });
 
+console.log(new Date().toLocaleString());
+
 parsersIterator.next().value();

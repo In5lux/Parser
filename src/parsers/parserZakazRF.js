@@ -108,19 +108,13 @@ const parserZakazRF = () => {
 			}
 		});
 
-		console.log(`ZakazRF — ${query} (${countQueries})`);
-		countQueries--;
-
 		if (!isNotExist) {
-			console.log(
-				data.length > 0
-					? data
-					: `ZakazRF — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}"\n`,
-			);
+			if (data.length > 0) {
+				console.log(data);
+			} else {
+				console.log(`ZakazRF — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}" (${countQueries})\n`);
+			}
 		}
-		if (countQueries == 0) {
-			myEmitter.emit('next');
-		};
 	};
 
 	const getData = (query) => {
@@ -131,8 +125,15 @@ const parserZakazRF = () => {
 				parseData(res.data, minPrice, query);
 			})
 			.catch((err) => {
-				console.log('ZakazRF — ' + query + ' — ' + err.message);
-				myEmitter.emit('next');
+				console.log(`ZakazRF — ${query} (${countQueries}) — ${err.message}`);
+			})
+			.finally(() => {
+				countQueries--;
+				if (countQueries == 0) {
+					setTimeout(() => {
+						myEmitter.emit('next');
+					}, 3000);
+				}
 			});
 	};
 

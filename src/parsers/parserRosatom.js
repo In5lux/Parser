@@ -26,23 +26,24 @@ const parserRosatom = () => {
 		}
 	}
 
-	const queries = [
-		'Деловых поездок',
-		'Проездных документов',
-		'Служебных поездок',
-		'Авиабилетов',
-		'Авиационных билетов',
-		'Организации воздушных перевозок',
-		'Перевозкам воздушным транспортом',
-		'Железнодорожных билетов',
-		'Служебных командировок',
-		'Командированию сотрудников',
-		'Командирований',
-		'Оказание услуг по организации командирования',
-		'Транспортного обслуживания',
-		'Протокольных мероприятий',
-		'Билетного аутсорсинга'
-	];
+	const queries = args.q
+		? [args.q] : [
+			'Деловых поездок',
+			'Проездных документов',
+			'Служебных поездок',
+			'Авиабилетов',
+			'Авиационных билетов',
+			'Организации воздушных перевозок',
+			'Перевозкам воздушным транспортом',
+			'Железнодорожных билетов',
+			'Служебных командировок',
+			'Командированию сотрудников',
+			'Командирований',
+			'Оказание услуг по организации командирования',
+			'Транспортного обслуживания',
+			'Протокольных мероприятий',
+			'Билетного аутсорсинга'
+		];
 
 	let countQueries = queries.length;
 
@@ -88,18 +89,11 @@ const parserRosatom = () => {
 			data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 		});
 
-		console.log(`Rosatom — ${query} (${countQueries})`);
-		countQueries--;
-
-		console.log(
-			data.length > 0
-				? data
-				: `Rosatom — нет результатов на дату ${year ? year : date} с минимальной ценой контракта ${minPrice} по запросу «${query}»`,
-		);
-
-		if (countQueries == 0) {
-			myEmitter.emit('next');
-		};
+		if (data.length > 0) {
+			console.log(data);
+		} else {
+			console.log(`Rosatom — нет результатов на дату ${year ? year : date} с минимальной ценой контракта ${minPrice} по запросу «${query}» (${countQueries})`);
+		}
 	};
 
 	const getData = (query) => {
@@ -110,8 +104,13 @@ const parserRosatom = () => {
 				parseData(res.data, minPrice, query);
 			})
 			.catch((err) => {
-				console.log('Rosatom — ' + query + ' — ' + err.message);
-				myEmitter.emit('next');
+				console.log(`Rosatom — ${query} (${countQueries})  — ${err.message}`);
+			})
+			.finally(() => {
+				countQueries--;
+				if (countQueries == 0) setTimeout(() => {
+					myEmitter.emit('next');
+				}, 3000);
 			});
 	};
 

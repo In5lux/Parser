@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
 import cheerio from 'cheerio';
-import { format, lastDayOfDecade } from 'date-fns';
+import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 import { myEmitter } from '../index.js'
@@ -15,11 +15,7 @@ const parserB2BCenter = () => {
 
 	const customer = args.c?.toLowerCase();
 
-	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
-
-	console.log(`\nB2B Center — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}\n`,
-	);
+	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"	
 
 	const queries = args.q
 		? [args.q]
@@ -42,6 +38,10 @@ const parserB2BCenter = () => {
 		];
 
 	let parseResults = [];
+
+	console.log(`\nB2B Center — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
+		} с минимальной суммой контракта ${minPrice}\n`,
+	);
 
 	const parseData = async (minPrice, queries) => {
 
@@ -119,19 +119,21 @@ const parserB2BCenter = () => {
 					parseResults.push(result);
 				});
 			} else {
-				console.log(`B2B Center — Нет доступных результатов по ключевому запросу "${query}"\n`);
+				console.log(`B2B Center — Нет доступных результатов по ключевому запросу "${query} (${count})"\n`);
 			}
-			console.log(`B2B Center — ${query} (${count})`);
-			count--;
+			
+			if (data.length > 0) {
+				console.log(data);
+			} else {
+				console.log(`B2B Center — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query} (${count})"\n`);
+			}
 
-			console.log(
-				data.length > 0
-					? data
-					: `B2B Center — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}"\n`,
-			);
+			count--;
 			if (count == 0) {
 				await browser.close();
-				myEmitter.emit('next');
+				setTimeout(() => {
+					myEmitter.emit('next');
+				}, 3000);
 			};
 		}
 	};
