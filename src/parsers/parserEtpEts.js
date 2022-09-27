@@ -3,20 +3,19 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { myEmitter } from '../index.js'
+import { myEmitter } from '../index.js';
 
 const parserEtpEts = () => {
-
 	const args = getArgs(argv);
 
 	const minPrice = args.s ? args.s : 300_000;
 
 	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
 
-	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"	
+	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
 	class UrlEncode {
-		constructor(query) {
+		constructor (query) {
 			this.url = `https://etp-ets.ru/44/catalog/procedure?q=${encodeURIComponent(query)}&simple-search=${encodeURIComponent('Искать')}`;
 		}
 	}
@@ -31,7 +30,7 @@ const parserEtpEts = () => {
 			'Выдворение',
 			'Перевозок департируемых',
 			'Проездных документов ',
-			//'Бронирование билетов',
+			// 'Бронирование билетов',
 			'Оформление авиабилетов',
 			'Авиационных билетов',
 			'Организации воздушных перевозок',
@@ -47,16 +46,16 @@ const parserEtpEts = () => {
 			'Пассажирские авиаперевозки иностранных граждан',
 			'Оказание услуг связанных с бронированием',
 			'Оказание услуг по реализации авиа, ж/д билетов',
-			'Оказание услуг по организации командирования',
+			'Оказание услуг по организации командирования'
 		];
 
 	let countQueries = queries.length;
 
-	let parseResults = [];
+	const parseResults = [];
 
 	console.log(
 		`\nEtp Ets 44 — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}\n`,
+		} с минимальной суммой контракта ${minPrice}\n`
 	);
 
 	const parseData = (html, minPrice, query) => {
@@ -79,20 +78,20 @@ const parserEtpEts = () => {
 					published: $(elem).find('td.row-publication_datetime').text().slice(0, 10),
 					end: $(elem).find('td.row-request_end_give_datetime').text(),
 					link: $(elem).find('td.row-procedure_name a').attr('href'),
-					documents: $(elem).find('td.row-procedure_name a').attr('href')?.replace('procedure', 'documentation'),
-				}
+					documents: $(elem).find('td.row-procedure_name a').attr('href')?.replace('procedure', 'documentation')
+				};
 
 				if (
 					!parseResults.filter((parseResult) => parseResult.link == result.link).length
-					//Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+				// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
 				) {
 					if (result.published == date || date == '*') {
-						//Фильтр по дате, если дата не указана выводятся все даты
+						// Фильтр по дате, если дата не указана выводятся все даты
 						const isCustomer = args.c
 							? result.customer.toLowerCase().replaceAll('"', '').match(args.c.toLowerCase())
 							: undefined;
 						if (isCustomer || args.c === undefined) {
-							//Фильтр по наименованию клиента
+							// Фильтр по наименованию клиента
 							data.push(result);
 						}
 					}
@@ -102,8 +101,8 @@ const parserEtpEts = () => {
 
 				data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 			}
-
 		});
+		// console.log(`Etp Ets 44 — ${query} (${countQueries})`);
 		if (!isNotExist) {
 			if (data.length > 0) {
 				console.log(data);
@@ -126,15 +125,17 @@ const parserEtpEts = () => {
 			})
 			.finally(() => {
 				countQueries--;
-				if (countQueries == 0) setTimeout(() => {
-					myEmitter.emit('next');
-				}, 3000);
+				if (countQueries == 0) {
+					setTimeout(() => {
+						myEmitter.emit('next');
+					}, 3000);
+				}
 			});
 	};
 
-	for (let query of queries) {
-		getData(query)
-	};
+	for (const query of queries) {
+		getData(query);
+	}
 };
 
-export { parserEtpEts }
+export { parserEtpEts };

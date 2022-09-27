@@ -3,19 +3,18 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { myEmitter } from '../index.js'
+import { myEmitter } from '../index.js';
 
 const parserSberbankAst = () => {
-
 	const args = getArgs(argv);
 
-	const minPrice = args.s ? args.s : 0;
+	const minPrice = args.s ? args.s : 300_000;
 
 	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
 
 	const customer = args.c?.toLowerCase();
 
-	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"	
+	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
 	const queries = args.q
 		? [args.q]
@@ -41,31 +40,28 @@ const parserSberbankAst = () => {
 			'Билетного аутсорсинга'
 		];
 
-	let parseResults = [];
+	const parseResults = [];
 
-	console.log(`\nSberbank AST — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}\n`,
+	console.log(`\nSberbank AST — Результаты на ${date === '*' ? 'все опубликованные закупки' : date} с минимальной суммой контракта ${minPrice}\n`
 	);
 
 	const parseData = async (minPrice, queries) => {
-
 		const browserFetcher = puppeteer.createBrowserFetcher();
 		const revisionInfo = await browserFetcher.download('991974');
 
 		const browser = await puppeteer.launch({
 			executablePath: revisionInfo.executablePath,
 			headless: true, // false: enables one to view the Chrome instance in action
-			//defaultViewport: { width: 1263, height: 930 }, // optional
+			// defaultViewport: { width: 1263, height: 930 }, // optional
 			slowMo: 25
 		});
 
 		let count = queries.length;
 
-		for (let query of queries) {
-
+		for (const query of queries) {
 			const page = await browser.newPage();
 			page.setDefaultNavigationTimeout(0);
-			//await page.waitForTimeout(3000);
+			// await page.waitForTimeout(3000);
 			await page.goto('https://www.sberbank-ast.ru', { waitUntil: 'networkidle2' });
 			await page.waitForSelector('#txtUnitedPurchaseSearch');
 			await page.focus('#txtUnitedPurchaseSearch');
@@ -73,9 +69,10 @@ const parserSberbankAst = () => {
 			await page.keyboard.type(query);
 			await page.click('#btnUnitedPurchaseSearch');
 			await page.waitForTimeout(3000);
-			//await page.screenshot({ path: `page ${query}.png` });
+			// await page.screenshot({ path: `page ${query}.png` });
 			const html = await page.evaluate(() => {
 				try {
+					// eslint-disable-next-line no-undef
 					return document.documentElement.outerHTML;
 				} catch (e) {
 					return e.toString();
@@ -92,7 +89,6 @@ const parserSberbankAst = () => {
 
 			if (isExsist) {
 				$('.purch-reestr-tbl-div').each((i, elem) => {
-
 					const result = {
 						number: $(elem).find('.es-el-code-term').text(),
 						section: $(elem).find('.es-el-source-term').text(),
@@ -104,20 +100,20 @@ const parserSberbankAst = () => {
 						published: $(elem).find('tr:first-child>td:last-child>table>tbody>tr:first-child>td:last-child>span').text().split(' ')[0],
 						end: $(elem).find('tr:first-child>td:last-child>table>tbody>tr:nth-child(3)>td:last-child>div>span').text().split(' ')[0],
 						link: $(elem).find('tr:nth-child(1)>td:nth-child(2)>div:nth-child(1)>input:nth-child(4)').attr('value'),
-						query: query,
+						query
 					};
 
 					if (
 						!parseResults.filter((parseResult) => parseResult.link == result.link).length
-						//Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+						// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
 					) {
 						if (result.published === date || date === '*') {
-							//Фильтр по дате, если дата не указана выводятся все даты
+							// Фильтр по дате, если дата не указана выводятся все даты
 							const isCustomer = customer
 								? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
 								: undefined;
 							if (isCustomer || customer === undefined) {
-								//Фильтр по наименованию клиента
+								// Фильтр по наименованию клиента
 								data.push(result);
 							}
 						}
@@ -125,10 +121,10 @@ const parserSberbankAst = () => {
 					}
 					parseResults.push(result);
 				});
-
 			} else {
 				console.log(`Sberbank AST — Нет доступных результатов по ключевому запросу "${query}"\n`);
 			}
+			// console.log(`Sberbank AST — ${query} (${count})`);
 
 			if (data.length > 0) {
 				console.log(data);
@@ -142,10 +138,10 @@ const parserSberbankAst = () => {
 				setTimeout(() => {
 					myEmitter.emit('next');
 				}, 3000);
-			};
+			}
 		}
 	};
 	parseData(minPrice, queries);
 };
 
-export { parserSberbankAst }
+export { parserSberbankAst };

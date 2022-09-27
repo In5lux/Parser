@@ -3,10 +3,9 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { myEmitter } from '../index.js'
+import { myEmitter } from '../index.js';
 
 const parserZakazRF = () => {
-
 	const args = getArgs(argv);
 
 	const minPrice = args.s ? args.s : 300_000;
@@ -21,7 +20,7 @@ const parserZakazRF = () => {
 		constructor(query) {
 			this.query = query;
 			this.url = `http://zakazrf.ru/NotificationEx/Index?Filter=1&OrderName=${encodeURIComponent(
-				this.query,
+				this.query
 			)}&ExpandFilter=1`;
 		}
 	}
@@ -58,11 +57,11 @@ const parserZakazRF = () => {
 
 	let countQueries = queries.length;
 
-	let parseResults = [];
+	const parseResults = [];
 
 	console.log(
 		`\nZakazRF: Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}\n`,
+		} с минимальной суммой контракта ${minPrice}\n`
 	);
 
 	const parseData = (html, minPrice, query) => {
@@ -83,20 +82,20 @@ const parserZakazRF = () => {
 					price: $(elem).find('td:nth-child(6)').text() + ' руб.',
 					published: $(elem).find('td:nth-child(10)').text(),
 					end: $(elem).find('td:nth-child(12)').text(),
-					link: 'http://zakazrf.ru' + $(elem).find('td:nth-child(2)>a').attr('href'),
+					link: 'http://zakazrf.ru' + $(elem).find('td:nth-child(2)>a').attr('href')
 				};
 
 				if (
 					!parseResults.filter((parseResult) => parseResult.link == result.link).length
-					//Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+					// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
 				) {
 					if (result.published == date || date == '*') {
-						//Фильтр по дате, если дата не указана выводятся все даты
+						// Фильтр по дате, если дата не указана выводятся все даты
 						const isCustomer = args.c
 							? result.customer.toLowerCase().replaceAll('"', '').match(customer)
 							: undefined;
 						if (isCustomer || args.c === undefined) {
-							//Фильтр по наименованию клиента
+							// Фильтр по наименованию клиента
 							data.push(result);
 						}
 					}
@@ -107,6 +106,8 @@ const parserZakazRF = () => {
 				data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 			}
 		});
+
+		// console.log(`ZakazRF — ${query} (${countQueries})`);
 
 		if (!isNotExist) {
 			if (data.length > 0) {
@@ -119,6 +120,7 @@ const parserZakazRF = () => {
 
 	const getData = (query) => {
 		const url = new UrlEncode(query).url;
+
 		axios
 			.get(url)
 			.then((res) => {
@@ -137,9 +139,9 @@ const parserZakazRF = () => {
 			});
 	};
 
-	for (let query of queries) {
-		getData(query)
-	};
+	for (const query of queries) {
+		getData(query);
+	}
 };
 
-export { parserZakazRF }
+export { parserZakazRF };

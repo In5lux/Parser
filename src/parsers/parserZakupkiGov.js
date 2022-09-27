@@ -3,10 +3,9 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { myEmitter } from '../index.js'
+import { myEmitter } from '../index.js';
 
 const parserZakupkiGov = () => {
-
 	const args = getArgs(argv);
 
 	const minPrice = args.s ? args.s : 300_000;
@@ -19,7 +18,7 @@ const parserZakupkiGov = () => {
 
 	console.log(
 		`\nРезультаты на ${date === '*' ? 'все опубликованные активные закупки' : date
-		} с минимальной суммой контракта ${minPrice}\n`,
+		} с минимальной суммой контракта ${minPrice}\n`
 	);
 
 	class UrlEncode {
@@ -32,7 +31,8 @@ const parserZakupkiGov = () => {
 	}
 
 	const queries = args.q
-		? [args.q] : [
+		? [args.q]
+		: [
 			'Оказания услуг по бронированию, оформлению, продаже, обмену и возврату авиабилетов',
 			'Организация командировок',
 			'Организация деловых поездок',
@@ -62,19 +62,20 @@ const parserZakupkiGov = () => {
 			'Билетного аутсорсинга',
 			'Деловых мероприятий',
 			'Протокольных мероприятий',
-			'Безденежному оформлению и предоставлению'
+			'Безденежному оформлению и предоставлению',
+			'Организации перевозок по территории РФ',
+			'Транспортно экспедиторское обслуживание'
 		];
 
 	let countQueries = queries.length;
 
-	let parseResults = [];
+	const parseResults = [];
 
 	console.log(customer ? `Поиск по компании «${customer[0].toUpperCase()}${customer.slice(1)}»` : 'Поиск по всем компаниям');
 
 	const parseData = (html, minPrice, query) => {
 		let data = [];
 		const $ = cheerio.load(html);
-
 
 		$('.search-registry-entry-block').each((i, elem) => {
 			const result = {
@@ -85,21 +86,21 @@ const parserZakupkiGov = () => {
 				price: $(elem).find('.price-block .price-block__value').text().trim(),
 				published: $(elem).find('.col-6:first-child .data-block__value').text(),
 				end: $(elem).find('.data-block > .data-block__value').text(),
-				link: 'https://zakupki.gov.ru' + $(elem).find('.registry-entry__header-mid__number a').attr('href'),
+				link: 'https://zakupki.gov.ru' + $(elem).find('.registry-entry__header-mid__number a').attr('href')
 			};
 			result.documents = result.link.replace('common-info', 'documents');
 
 			if (
 				parseResults.filter((parseResult) => parseResult.link == result.link).length == 0
-				//Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+				// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
 			) {
 				if (result.published === date || date === '*') {
-					//Фильтр по дате, если дата не указана выводятся все даты
+					// Фильтр по дате, если дата не указана выводятся все даты
 					const isCustomer = customer
 						? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
 						: undefined;
 					if (isCustomer || customer === undefined) {
-						//Фильтр по наименованию клиента
+						// Фильтр по наименованию клиента
 						data.push(result);
 					}
 				}
@@ -110,7 +111,7 @@ const parserZakupkiGov = () => {
 			data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 		});
 
-		//console.log(`Zakupki Gov — ${query} (${countQueries})`);
+		// console.log(`Zakupki Gov — ${query} (${countQueries})`);
 
 		if (data.length) {
 			console.log(data);
@@ -119,7 +120,7 @@ const parserZakupkiGov = () => {
 		}
 	};
 
-	const countPages = (html, url) => {
+	const countPages = html => {
 		const $ = cheerio.load(html);
 		const pages = $('.paginator .page').length;
 		return pages;
@@ -134,17 +135,17 @@ const parserZakupkiGov = () => {
 				const pages = countPages(res.data, query);
 				if (!pages) {
 					console.log(
-						`\nZakupki Gov — Количество страниц по запросу "${query}" (${count}) — 1` + `\nСтраница 1 по запросу ${query}`,
+						`\nZakupki Gov — Количество страниц по запросу "${query}" (${count}) — 1` + `\nСтраница 1 по запросу ${query}`
 					);
 					parseData(res.data, minPrice, query);
 				} else {
 					for (let i = 1; i <= pages; i++) {
-						let newUrl = url.replace(/pageNumber=\d/, `pageNumber=${i}`);
-						//console.log(`НОВАЯ ССЫЛКА  ${newUrl}`);
+						const newUrl = url.replace(/pageNumber=\d/, `pageNumber=${i}`);
+						// console.log(`НОВАЯ ССЫЛКА  ${newUrl}`);
 						axios.get(newUrl).then((res) => {
 							console.log(
 								`\nZakupki Gov — Количество страниц по запросу "${query}" (${count}) — ${pages}` +
-								`\nСтраница ${i} по запросу ${query}`,
+								`\nСтраница ${i} по запросу ${query}`
 							);
 							parseData(res.data, minPrice, query);
 						});
@@ -157,15 +158,17 @@ const parserZakupkiGov = () => {
 			})
 			.finally(() => {
 				countQueries--;
-				if (countQueries == 0) setTimeout(() => {
-					myEmitter.emit('next');
-				}, 3000);
+				if (countQueries == 0) {
+					setTimeout(() => {
+						myEmitter.emit('next');
+					}, 3000);
+				}
 			});
 	};
 
-	for (let query of queries) {
+	for (const query of queries) {
 		getData(query);
-	};
+	}
 };
 
-export { parserZakupkiGov }
+export { parserZakupkiGov };

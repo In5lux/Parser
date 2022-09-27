@@ -3,17 +3,16 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { myEmitter } from '../index.js'
+import { myEmitter } from '../index.js';
 
 const parserRoseltorg = () => {
-
 	const args = getArgs(argv);
 
 	const minPrice = args.s ? args.s : 300_000;
 
 	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
 
-	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"	
+	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
 	class UrlEncode {
 		constructor(date, query) {
@@ -25,6 +24,7 @@ const parserRoseltorg = () => {
 	const queries = args.q
 		? [args.q]
 		: [
+			'Авиационным транспортом',
 			'Авиабилетов',
 			'Деловых поездок',
 			'Служебных поездок',
@@ -40,51 +40,51 @@ const parserRoseltorg = () => {
 			'Безденежному оформлению и предоставлению'
 		];
 
-	let parseResults = [];
+	const parseResults = [];
 
 	console.log(
 		`\nRoseltorg — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}\n`,
+		} с минимальной суммой контракта ${minPrice}\n`
 	);
 
 	const parseData = async (date, minPrice, queries) => {
-		//const browserFetcher = puppeteer.createBrowserFetcher();
-		//const revisionInfo = await browserFetcher.download('991974');
+		// const browserFetcher = puppeteer.createBrowserFetcher();
+		// const revisionInfo = await browserFetcher.download('991974');
 
 		const browser = await puppeteer.launch({
-			//executablePath: revisionInfo.executablePath,
+			// executablePath: revisionInfo.executablePath,
 			headless: true, // false: enables one to view the Chrome instance in action
-			//defaultViewport: { width: 1263, height: 930 }, // optional
+			// defaultViewport: { width: 1263, height: 930 }, // optional
 			slowMo: 25
 		});
 
 		let count = queries.length;
 
-		for (let query of queries) {
+		for (const query of queries) {
 			const url = new UrlEncode(date, query).url;
 			const page = await browser.newPage();
 			page.setDefaultNavigationTimeout(0);
-			//page.on('load', () => console.log('Loaded!', page.url()));
-			//page.on('domcontentloaded', () => console.log('dom fired'));
-			//await page.waitForTimeout(3000);
+			// page.on('load', () => console.log('Loaded!', page.url()));
+			// page.on('domcontentloaded', () => console.log('dom fired'));
+			// await page.waitForTimeout(3000);
 			await page.goto(url, { waitUntil: 'networkidle2' });
 
-			//await page.screenshot({ path: `page — ${query}.png` });
-			//await page.pdf({ path: `page ${query}.pdf`, printBackground: true, width: '1263px', height: '930px' });
+			// await page.screenshot({ path: `page — ${query}.png` });
+			// await page.pdf({ path: `page ${query}.pdf`, printBackground: true, width: '1263px', height: '930px' });
 			const html = await page.content();
 
 			let data = [];
 
 			const $ = cheerio.load(html);
-			let isExist = !$('.search-results__info-text p:first-child').text() == 'По вашему запросу ничего не найдено.';
+			const isExist = !$('.search-results__info-text p:first-child').text() == 'По вашему запросу ничего не найдено.';
 
-			if (isExist) {
-
+			if (!isExist) {
 				const itemLinks = await page.evaluate(() =>
+					// eslint-disable-next-line no-undef
 					Array.from(document.querySelectorAll('.search-results__subject a'), e => e.href)
 				);
 
-				let itemsInfo = [];
+				const itemsInfo = [];
 
 				for (const link of itemLinks) {
 					const itemInfo = {};
@@ -104,7 +104,6 @@ const parserRoseltorg = () => {
 				}
 
 				$('.search-results__item').each((i, elem) => {
-
 					const result = {
 						number: $(elem).find('.search-results__lot a').text().split(' ')[0],
 						law: $(elem).find('.search-results__section p.search-results__tooltip').text(),
@@ -117,32 +116,33 @@ const parserRoseltorg = () => {
 						securing_requisition: itemsInfo[i].securing_requisition,
 						securing_contract: itemsInfo[i].securing_contract,
 						link: 'https://www.roseltorg.ru' + $(elem).find('.search-results__subject a').attr('href'),
-						query: query,
-					}
+						query
+					};
 
 					if (
 						!parseResults.filter((parseResult) => parseResult.number == result.number).length
-						//Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+						// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
 					) {
 						if (result.published == date || date == '*') {
-							//Фильтр по дате, если дата не указана выводятся все даты
+							// Фильтр по дате, если дата не указана выводятся все даты
 							const isCustomer = args.c
 								? result.customer.toLowerCase().replaceAll('"', '').match(args.c.toLowerCase())
 								: undefined;
 							if (isCustomer || args.c === undefined) {
-								//Фильтр по наименованию клиента
+								// Фильтр по наименованию клиента
 								data.push(result);
 							}
 						}
 					}
 
 					parseResults.push(result);
-
 				});
 				data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 			}
 
 			await page.close();
+
+			// console.log(`Roseltorg — ${query} (${count})`);
 
 			if (data.length > 0) {
 				console.log(data);
@@ -156,10 +156,10 @@ const parserRoseltorg = () => {
 				setTimeout(() => {
 					myEmitter.emit('next');
 				}, 3000);
-			};
+			}
 		}
 	};
 	parseData(date, minPrice, queries);
 };
 
-export { parserRoseltorg }
+export { parserRoseltorg };

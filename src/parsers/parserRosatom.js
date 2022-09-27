@@ -3,7 +3,7 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { myEmitter } from '../index.js'
+import { myEmitter } from '../index.js';
 
 const parserRosatom = () => {
 	const args = getArgs(argv);
@@ -15,19 +15,18 @@ const parserRosatom = () => {
 
 	// Формат — node -s "цена контракта (число)" -y "год публикации закупки (гггг)"
 
-
-
 	class UrlEncode {
-		constructor(query) {
+		constructor (query) {
 			this.query = query;
 			this.url = `https://zakupki.rosatom.ru/Web.aspx?node=currentorders&ot=${encodeURIComponent(
-				this.query,
+				this.query
 			)}&tso=1&tsl=1&sbflag=0&pricemon=0&ostate=P&pform=a`;
 		}
 	}
 
 	const queries = args.q
-		? [args.q] : [
+		? [args.q]
+		: [
 			'Деловых поездок',
 			'Проездных документов',
 			'Служебных поездок',
@@ -47,7 +46,7 @@ const parserRosatom = () => {
 
 	let countQueries = queries.length;
 
-	let parseResults = [];
+	const parseResults = [];
 
 	console.log('\nRosatom: результаты поиска\n');
 
@@ -63,7 +62,7 @@ const parserRosatom = () => {
 				price: $(elem).find('tr td:nth-child(4)>p:first-child').text().trim(),
 				published: $(elem).find('td:nth-child(6)>p').text().trim(),
 				end: $(elem).find('td:nth-child(7)>p').text().replace(/\s{2,}/gm, ' '),
-				link: 'https://zakupki.rosatom.ru' + $(elem).find('td.description>p:nth-child(2)>a').attr('href'),
+				link: 'https://zakupki.rosatom.ru' + $(elem).find('td.description>p:nth-child(2)>a').attr('href')
 			};
 
 			const yearPublished = result.published.split('.')[2];
@@ -71,15 +70,15 @@ const parserRosatom = () => {
 			if (
 				parseResults.filter((parseResult) => parseResult.link == result.link).length == 0 &&
 				!!result.number
-				//Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+				// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
 			) {
 				if (yearPublished == year || date === '*' || result.published === date) {
-					//Фильтр по дате, если дата не указана выводятся все даты
+					// Фильтр по дате, если дата не указана выводятся все даты
 					const isCustomer = customer
 						? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
 						: undefined;
 					if (isCustomer || customer === undefined) {
-						//Фильтр по наименованию клиента
+						// Фильтр по наименованию клиента
 						data.push(result);
 					}
 				}
@@ -89,10 +88,12 @@ const parserRosatom = () => {
 			data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 		});
 
+		// console.log(`Rosatom — ${query} (${countQueries})`);
+
 		if (data.length > 0) {
 			console.log(data);
 		} else {
-			console.log(`Rosatom — нет результатов на дату ${year ? year : date} с минимальной ценой контракта ${minPrice} по запросу «${query}» (${countQueries})`);
+			console.log(`Rosatom — нет результатов на дату ${year || date} с минимальной ценой контракта ${minPrice} по запросу «${query}» (${countQueries})`);
 		}
 	};
 
@@ -108,15 +109,17 @@ const parserRosatom = () => {
 			})
 			.finally(() => {
 				countQueries--;
-				if (countQueries == 0) setTimeout(() => {
-					myEmitter.emit('next');
-				}, 3000);
+				if (countQueries == 0) {
+					setTimeout(() => {
+						myEmitter.emit('next');
+					}, 3000);
+				}
 			});
 	};
 
-	for (let query of queries) {
+	for (const query of queries) {
 		getData(query);
-	};
+	}
 };
 
-export { parserRosatom }
+export { parserRosatom };

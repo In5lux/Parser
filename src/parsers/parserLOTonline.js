@@ -3,10 +3,9 @@ import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 import cheerio from 'cheerio';
-import { myEmitter } from '../index.js'
+import { myEmitter } from '../index.js';
 
 const parserLOTonline = () => {
-
 	const args = getArgs(argv);
 
 	const minPrice = args.s ? args.s : 100_000;
@@ -15,7 +14,7 @@ const parserLOTonline = () => {
 
 	const customer = args.c?.toLowerCase();
 
-	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"	
+	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
 	class UrlEncode {
 		constructor(query) {
@@ -35,41 +34,40 @@ const parserLOTonline = () => {
 			'Билетного аутсорсинга'
 		];
 
-	let parseResults = [];
+	const parseResults = [];
 
 	console.log(
 		`\nLot-online — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}\n`,
+		} с минимальной суммой контракта ${minPrice}\n`
 	);
 
 	const parseData = async (minPrice, queries) => {
-
 		const browserFetcher = puppeteer.createBrowserFetcher();
 		const revisionInfo = await browserFetcher.download('991974');
 
 		const browser = await puppeteer.launch({
 			executablePath: revisionInfo.executablePath,
 			headless: true, // false: enables one to view the Chrome instance in action
-			//defaultViewport: { width: 1263, height: 930 }, // optional
+			// defaultViewport: { width: 1263, height: 930 }, // optional
 			slowMo: 25
 		});
 
 		let count = queries.length;
 
-		for (let query of queries) {
+		for (const query of queries) {
 			const url = new UrlEncode(query).url;
 			const page = await browser.newPage();
 			page.setDefaultNavigationTimeout(0);
-			//await page.waitForTimeout(3000);
+			// await page.waitForTimeout(3000);
 			await page.goto(url, { waitUntil: 'networkidle2' });
-			//await page.setViewport({ width: 1263, height: 930 });
+			// await page.setViewport({ width: 1263, height: 930 });
 			// await page.waitForSelector('div.mat-expansion-panel-body div div input');
 			// await page.focus('div.mat-expansion-panel-body div div input');
 			// await page.waitForTimeout(1000);
 			// await page.keyboard.type(query);
 			// await page.click('button[type="submit"]');
-			//await page.screenshot({ path: `page — ${query}.png` });
-			//await page.pdf({ path: `page ${query}.pdf`, printBackground: true, width: '1263px', height: '930px' });
+			// await page.screenshot({ path: `page — ${query}.png` });
+			// await page.pdf({ path: `page ${query}.pdf`, printBackground: true, width: '1263px', height: '930px' });
 			const html = await page.content();
 
 			const $ = cheerio.load(html);
@@ -89,26 +87,26 @@ const parserLOTonline = () => {
 						status: $(elem).find('.card-div__procedureStatus span:nth-child(2)').text().trim(),
 						customer: $(elem).find('div>div:nth-child(3)>div.col-12.col-md-8>div>div:nth-child(2)').text().trim(),
 						description: $(elem).find('div>div.row.col-12.mb-2.mt-4.pl-md-0>div.col-12.col-md-8>div.row.col-12.p-md-0.mx-md-0.__purchaseObjectInfo>p').text().replace(/[\n\t]/g, ' ').trim(),
-						price: $(elem).find('.card-div__maxSumTitle').text(),
+						price: $(elem).find('.card-div__maxSum').text(),
 						published: $(elem).find('.__publication-date').text().split(' ')[1],
 						end: $(elem).find('div>div.row.col-12.mb-2.mt-4.pl-md-0>div.col-12.col-md-4.pl-md-0.card-div__procedureStatus.ng-star-inserted>span:nth-child(4)').text().split(' ')[4] || '—',
 						link: 'https://gz.lot-online.ru' + $(elem).find('a.__link_purchase-number').attr('href'),
-						documents: 'https://gz.lot-online.ru' + $(elem).find('a.__link_purchase-number').attr('href').replace('common', 'documentation'),
-					}
+						documents: 'https://gz.lot-online.ru' + $(elem).find('a.__link_purchase-number').attr('href').replace('common', 'documentation')
+					};
 
 					console.log(result);
 
 					if (
 						!parseResults.filter((parseResult) => parseResult.link == result.link).length
-						//Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+						// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
 					) {
 						if (result.published === date || date === '*') {
-							//Фильтр по дате, если дата не указана выводятся все даты
+							// Фильтр по дате, если дата не указана выводятся все даты
 							const isCustomer = customer
 								? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
 								: undefined;
 							if (isCustomer || customer === undefined) {
-								//Фильтр по наименованию клиента
+								// Фильтр по наименованию клиента
 								data.push(result);
 							}
 						}
@@ -120,6 +118,7 @@ const parserLOTonline = () => {
 			} else {
 				console.log(`Lot-online — Нет доступных результатов по ключевому запросу "${query}" (${count})\n`);
 			}
+			// console.log(`Lot-online — ${query} (${count})`);
 
 			if (data.length > 0) {
 				console.log(data);
@@ -133,10 +132,10 @@ const parserLOTonline = () => {
 				setTimeout(() => {
 					myEmitter.emit('next');
 				}, 3000);
-			};
+			}
 		}
 	};
 	parseData(minPrice, queries);
 };
 
-export { parserLOTonline }
+export { parserLOTonline };

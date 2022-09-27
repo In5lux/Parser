@@ -4,10 +4,9 @@ import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 import { dateFormat } from '../helpers/dateFormatter.js';
-import { myEmitter } from '../index.js'
+import { myEmitter } from '../index.js';
 
 const parserFabrikant = () => {
-
 	const args = getArgs(argv);
 
 	const minPrice = args.s ? args.s : 300000;
@@ -18,7 +17,7 @@ const parserFabrikant = () => {
 
 	const customer = args.c?.toLowerCase();
 
-	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"	
+	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
 	class UrlEncode {
 		constructor(query, active) {
@@ -54,11 +53,11 @@ const parserFabrikant = () => {
 
 	let countQueries = queries.length;
 
-	let parseResults = [];
+	const parseResults = [];
 
 	console.log(
 		`\nFabrikant — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-		} с минимальной суммой контракта ${minPrice}\n`,
+		} с минимальной суммой контракта ${minPrice}\n`
 	);
 
 	const parseData = (html, minPrice, query) => {
@@ -67,7 +66,7 @@ const parserFabrikant = () => {
 
 		const isExsist = !$('.Search-result-no')['0']?.name === 'div';
 
-		if (isExsist) {
+		if (!isExsist) {
 			$('.innerGrid').each((i, elem) => {
 				// isNotExist = $(elem).find('td').text().trim() === '(нет данных)';
 
@@ -80,8 +79,8 @@ const parserFabrikant = () => {
 					price: $(elem).find('.marketplace-unit__price span strong').text().trim() || $(elem).find('.marketplace-unit__price p').text().trim() || $(elem).find('.marketplace-unit__price>span').text().trim(),
 					published: $(elem).find('.marketplace-unit__state__wrap>.marketplace-unit__state:first-child .dt').text(),
 					end: $(elem).find('.marketplace-unit__state__wrap>.marketplace-unit__state:last-child .dt').text(),
-					link: 'https://www.fabrikant.ru' + $(elem).find('.marketplace-unit__title a').attr('href'),
-				}
+					link: 'https://www.fabrikant.ru' + $(elem).find('.marketplace-unit__title a').attr('href')
+				};
 
 				result.link = result.link.includes('etp-ets') ? result.link.replace('https://www.fabrikant.ru', '') : result.link;
 				result.published = dateFormat(result.published);
@@ -90,15 +89,15 @@ const parserFabrikant = () => {
 
 				if (
 					!parseResults.filter((parseResult) => parseResult.link == result.link).length
-					//Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+					// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
 				) {
 					if (result.published === date || date === '*') {
-						//Фильтр по дате, если дата не указана выводятся все даты
+						// Фильтр по дате, если дата не указана выводятся все даты
 						const isCustomer = customer
 							? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
 							: undefined;
 						if (isCustomer || customer === undefined) {
-							//Фильтр по наименованию клиента
+							// Фильтр по наименованию клиента
 							data.push(result);
 						}
 					}
@@ -107,7 +106,9 @@ const parserFabrikant = () => {
 
 				data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 			});
-		};
+		}
+
+		// console.log(`Fabrikant — ${query} (${countQueries})`);
 
 		if (data.length > 0) {
 			console.log(data);
@@ -117,7 +118,7 @@ const parserFabrikant = () => {
 	};
 
 	const getData = (query) => {
-		const url = new UrlEncode(query, active).url;
+		const url = new UrlEncode(query, active).url;		
 		axios
 			.get(url)
 			.then((res) => {
@@ -128,16 +129,17 @@ const parserFabrikant = () => {
 			})
 			.finally(() => {
 				countQueries--;
-				if (countQueries == 0) setTimeout(() => {
-					myEmitter.emit('next');
-				}, 3000);
+				if (countQueries == 0) {
+					setTimeout(() => {
+						myEmitter.emit('next');
+					}, 3000);
+				}
 			});
 	};
 
-	for (let query of queries) {
-		getData(query)
-	};
+	for (const query of queries) {
+		getData(query);
+	}
 };
 
-
-export { parserFabrikant }
+export { parserFabrikant };
