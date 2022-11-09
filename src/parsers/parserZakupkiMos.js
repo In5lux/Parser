@@ -4,6 +4,7 @@ import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 import cheerio from 'cheerio';
 import { options, bot, myEmitter } from '../index.js';
+import { txtFilterByStopWords } from '../helpers/textFilter.js';
 
 const parserZakupkiMos = () => {
 	const args = getArgs(argv);
@@ -75,37 +76,41 @@ const parserZakupkiMos = () => {
 			if (isExsist) {
 				$('.PublicListStyles__PublicListContentContainer-sc-1q0smku-1>div').each((i, elem) => {
 
-					const result = {
-						number: $(elem).find('a.CardStyles__MainInfoNumberHeader-sc-18miw4v-4>span').text(),
-						type: $(elem).find('.CardStyles__FlexContainer-sc-18miw4v-0>span').text(),
-						law: $(elem).find('.CardStyles__AdditionalInfoHeader-sc-18miw4v-11:nth-child(2)>span').text(),
-						status: $(elem).find('.CardStyles__MainInfoStateIndicator-sc-18miw4v-5>div.content').text(),
-						customer: $(elem).find('.PurchaseCardStyles__MainInfoCustomerHeader-sc-3hfhop-0').text(),
-						description: $(elem).find('a.CardStyles__MainInfoNameHeader-sc-18miw4v-8>span').text(),
-						price: $(elem).find('.CardStyles__PriceInfoNumber-sc-18miw4v-9').text(),
-						published: $(elem).find('.CardStyles__AdditionalInfoHeader-sc-18miw4v-11:nth-child(3)>span').text().split(' ')[1],
-						end: $(elem).find('.CardStyles__AdditionalInfoHeader-sc-18miw4v-11:nth-child(3)>span').text().split(' ')[3],
-						link: 'https://zakupki.mos.ru' + $(elem).find('a.CardStyles__MainInfoNameHeader-sc-18miw4v-8').attr('href')
-					};
+					const description = $(elem).find('a.CardStyles__MainInfoNameHeader-sc-18miw4v-8>span').text();
 
-					if (
-						!parseResults.filter((parseResult) => parseResult.link == result.link).length
-						// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
-					) {
-						if (result.published === date || date === '*') {
-							// Фильтр по дате, если дата не указана выводятся все даты
-							const isCustomer = customer
-								? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
-								: undefined;
-							if (isCustomer || customer === undefined) {
-								// Фильтр по наименованию клиента
-								data.push(result);
+					if (txtFilterByStopWords(description)) {
+						const result = {
+							number: $(elem).find('a.CardStyles__MainInfoNumberHeader-sc-18miw4v-4>span').text(),
+							type: $(elem).find('.CardStyles__FlexContainer-sc-18miw4v-0>span').text(),
+							law: $(elem).find('.CardStyles__AdditionalInfoHeader-sc-18miw4v-11:nth-child(2)>span').text(),
+							status: $(elem).find('.CardStyles__MainInfoStateIndicator-sc-18miw4v-5>div.content').text(),
+							customer: $(elem).find('.PurchaseCardStyles__MainInfoCustomerHeader-sc-3hfhop-0').text(),
+							description,
+							price: $(elem).find('.CardStyles__PriceInfoNumber-sc-18miw4v-9').text(),
+							published: $(elem).find('.CardStyles__AdditionalInfoHeader-sc-18miw4v-11:nth-child(3)>span').text().split(' ')[1],
+							end: $(elem).find('.CardStyles__AdditionalInfoHeader-sc-18miw4v-11:nth-child(3)>span').text().split(' ')[3],
+							link: 'https://zakupki.mos.ru' + $(elem).find('a.CardStyles__MainInfoNameHeader-sc-18miw4v-8').attr('href')
+						};
+
+						if (
+							!parseResults.filter((parseResult) => parseResult.link == result.link).length
+							// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+						) {
+							if (result.published === date || date === '*') {
+								// Фильтр по дате, если дата не указана выводятся все даты
+								const isCustomer = customer
+									? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
+									: undefined;
+								if (isCustomer || customer === undefined) {
+									// Фильтр по наименованию клиента
+									data.push(result);
+								}
 							}
 						}
-					}
-					parseResults.push(result);
+						parseResults.push(result);
 
-					data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
+						data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
+					}
 				});
 			} else {
 				console.log(`Zakupki Mos — Нет доступных результатов по ключевому запросу "${query}" (${count})\n`);

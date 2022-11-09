@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 import { options, bot, myEmitter } from '../index.js';
+import { txtFilterByStopWords } from '../helpers/textFilter.js';
 
 const parserRoseltorg = () => {
 	const args = getArgs(argv);
@@ -106,7 +107,10 @@ const parserRoseltorg = () => {
 				$('.search-results__item').each((i, elem) => {
 					const description = $(elem).find('.search-results__subject a').text().replace(/[\n\t]/g, ' ').trim();
 
-					if (description.includes(query.split(' ')[0].slice(0, -2).toLowerCase())) {
+					if (
+						txtFilterByStopWords(description)
+						&& description.includes(query.split(' ')[0].slice(0, -2).toLowerCase())
+					) {
 
 						let securing_requisition = itemsInfo[i].securing_requisition;
 
