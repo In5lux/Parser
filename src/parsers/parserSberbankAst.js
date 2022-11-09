@@ -3,7 +3,9 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { options, bot, myEmitter } from '../index.js';
+import { options, bot, myEmitter, db, dbPath } from '../index.js';
+import { writeFileSync } from 'fs';
+import { isNew } from '../helpers/isNew.js';
 
 const parserSberbankAst = () => {
 	const args = getArgs(argv);
@@ -115,6 +117,22 @@ const parserSberbankAst = () => {
 							if (isCustomer || customer === undefined) {
 								// Фильтр по наименованию клиента
 								data.push(result);
+								if (isNew(db, result.number)) {
+									db.push(result);
+									writeFileSync(dbPath, JSON.stringify(db));
+									const message = `*Номер закупки:* ${result.number}\n\n`
+										+ `*Секция площадки:* ${result.section}\n\n`
+										+ `*Статус:* ${result.status}\n\n`
+										+ `*Тип закупки:* ${result.type}\n\n`
+										+ `*Клиент:* ${result.customer}\n\n`
+										+ `*Описание:* ${result.description}\n\n`
+										+ `*Цена:* ${result.price}\n\n`
+										+ `*Дата публикации:* ${result.published}\n\n`
+										+ `*Окончание:* ${result.end}\n\n`
+										+ `*Ссылка:* ${result.link}`;
+
+									bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
+								}
 							}
 						}
 						data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
@@ -128,20 +146,6 @@ const parserSberbankAst = () => {
 
 			if (data.length > 0) {
 				console.log(data);
-				for (const item of data) {
-					const message = `*Номер закупки:* ${item.number}\n\n`
-						+ `*Секция площадки:* ${item.section}\n\n`
-						+ `*Статус:* ${item.status}\n\n`
-						+ `*Тип закупки:* ${item.type}\n\n`
-						+ `*Клиент:* ${item.customer}\n\n`
-						+ `*Описание:* ${item.description}\n\n`
-						+ `*Цена:* ${item.price}\n\n`
-						+ `*Дата публикации:* ${item.published}\n\n`
-						+ `*Окончание:* ${item.end}\n\n`
-						+ `*Ссылка:* ${item.link}`;
-
-					bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
-				}
 			} else {
 				console.log(`Sberbank AST — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}" (${count})\n`);
 			}

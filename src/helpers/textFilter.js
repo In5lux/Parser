@@ -6,7 +6,8 @@ export const txtFilterByStopWords = (text) => {
 		'шин',
 		'медицинской',
 		'движения',
-		'уборке'
+		'уборке',
+		'санитарному'
 	];
 	for (const word of stopWords) {
 		if (text.indexOf(word) != -1) return false;

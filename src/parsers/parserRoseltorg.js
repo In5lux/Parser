@@ -3,8 +3,10 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { options, bot, myEmitter } from '../index.js';
+import { options, bot, myEmitter, db, dbPath } from '../index.js';
+import { writeFileSync } from 'fs';
 import { txtFilterByStopWords } from '../helpers/textFilter.js';
+import { isNew } from '../helpers/isNew.js';
 
 const parserRoseltorg = () => {
 	const args = getArgs(argv);
@@ -38,7 +40,7 @@ const parserRoseltorg = () => {
 			'Обеспечение авиационными билетами',
 			'Авиаперевозки',
 			'Билетного аутсорсинга',
-			'Безденежному оформлению и предоставлению'
+			'Безденежному оформлению и предоставлению',
 		];
 
 	const parseResults = [];
@@ -151,6 +153,23 @@ const parserRoseltorg = () => {
 								if (isCustomer || args.c === undefined) {
 									// Фильтр по наименованию клиента
 									data.push(result);
+									if (isNew(db, result.number)) {
+										db.push(result);
+										writeFileSync(dbPath, JSON.stringify(db));
+										const message = `*Номер закупки:* ${result.number}\n\n`
+											+ `*ФЗ:* ${result.law}\n\n`
+											+ `*Тип закупки:* ${result.type}\n\n`
+											+ `*Клиент:* ${result.customer}\n\n`
+											+ `*Описание:* ${result.description}\n\n`
+											+ `*Цена:* ${result.price}\n\n`
+											+ `*Дата публикации:* ${result.published}\n\n`
+											+ `*Окончание:* ${result.end}\n\n`
+											+ `*Обеспечение заявки:* ${result.securing_requisition}\n\n`
+											+ `*Обеспечение договора:* ${result.securing_contract}\n\n`
+											+ `*Ссылка:* ${result.link}`;
+
+										bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
+									}
 								}
 							}
 						}
@@ -166,21 +185,6 @@ const parserRoseltorg = () => {
 
 			if (data.length > 0) {
 				console.log(data);
-				for (const item of data) {
-					const message = `*Номер закупки:* ${item.number}\n\n`
-						+ `*ФЗ:* ${item.law}\n\n`
-						+ `*Тип закупки:* ${item.type}\n\n`
-						+ `*Клиент:* ${item.customer}\n\n`
-						+ `*Описание:* ${item.description}\n\n`
-						+ `*Цена:* ${item.price}\n\n`
-						+ `*Дата публикации:* ${item.published}\n\n`
-						+ `*Окончание:* ${item.end}\n\n`
-						+ `*Обеспечение заявки:* ${item.securing_requisition}\n\n`
-						+ `*Обеспечение договора:* ${item.securing_contract}\n\n`
-						+ `*Ссылка:* ${item.link}`;
-
-					bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
-				}
 			} else {
 				console.log(`Roseltorg — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}" (${count})\n`);
 			}

@@ -3,9 +3,12 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { options, bot, myEmitter } from '../index.js';
+import { options, bot, myEmitter, db, dbPath } from '../index.js';
+import { writeFileSync } from 'fs';
+import { isNew } from '../helpers/isNew.js';
 
 const parserZakupkiGov = () => {
+
 	const args = getArgs(argv);
 
 	const minPrice = args.s ? args.s : 300_000;
@@ -79,6 +82,7 @@ const parserZakupkiGov = () => {
 		// eslint-disable-next-line no-debugger
 		debugger;
 		$('.search-registry-entry-block').each((i, elem) => {
+
 			const result = {
 				number: $(elem).find('.registry-entry__header-mid__number a').text().trim(),
 				type: $(elem).find('.registry-entry__header-top__title').text().replace(/\s{2,}/g, ' ').trim(),
@@ -103,6 +107,21 @@ const parserZakupkiGov = () => {
 					if (isCustomer || customer === undefined) {
 						// Фильтр по наименованию клиента
 						data.push(result);
+						if (isNew(db, result.number)) {
+							db.push(result);
+							writeFileSync(dbPath, JSON.stringify(db));
+							const message = `*Номер закупки:* ${result.number}\n\n`
+								+ `*Тип закупки:* ${result.type}\n\n`
+								+ `*Клиент:* ${result.customer}\n\n`
+								+ `*Описание:* ${result.description}\n\n`
+								+ `*Цена:* ${result.price}\n\n`
+								+ `*Дата публикации:* ${result.published}\n\n`
+								+ `*Окончание:* ${result.end}\n\n`
+								+ `*Ссылка:* ${result.link}\n\n`
+								+ `*Документы:* ${result.documents}`;
+
+							bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
+						}
 					}
 				}
 			}
@@ -116,19 +135,6 @@ const parserZakupkiGov = () => {
 
 		if (data.length) {
 			console.log(data);
-			for (const item of data) {
-				const message = `*Номер закупки:* ${item.number}\n\n`
-					+ `*Тип закупки:* ${item.type}\n\n`
-					+ `*Клиент:* ${item.customer}\n\n`
-					+ `*Описание:* ${item.description}\n\n`
-					+ `*Цена:* ${item.price}\n\n`
-					+ `*Дата публикации:* ${item.published}\n\n`
-					+ `*Окончание:* ${item.end}\n\n`
-					+ `*Ссылка:* ${item.link}\n\n`
-					+ `*Документы:* ${item.documents}`;
-
-				bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
-			}
 		} else {
 			console.log(`Zakupki Gov — Нет результатов удовлетворяющих критериям поиска на ${date} с минимальной ценой ${minPrice} по запросу «${query}» (${countQueries})`);
 		}

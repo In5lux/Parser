@@ -3,7 +3,9 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { options, bot, myEmitter } from '../index.js';
+import { options, bot, myEmitter, db, dbPath } from '../index.js';
+import { writeFileSync } from 'fs';
+import { isNew } from '../helpers/isNew.js';
 
 const parserRosatom = () => {
 	const args = getArgs(argv);
@@ -80,6 +82,19 @@ const parserRosatom = () => {
 					if (isCustomer || customer === undefined) {
 						// Фильтр по наименованию клиента
 						data.push(result);
+						if (isNew(db, result.number)) {
+							db.push(result);
+							writeFileSync(dbPath, JSON.stringify(db));
+							const message = `*Номер закупки:* ${result.number}\n\n`
+								+ `*Клиент:* ${result.customer}\n\n`
+								+ `*Описание:* ${result.description}\n\n`
+								+ `*Цена:* ${result.price}\n\n`
+								+ `*Дата публикации:* ${result.published}\n\n`
+								+ `*Окончание:* ${result.end}\n\n`
+								+ `*Ссылка:* ${result.link}`;
+
+							bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
+						}
 					}
 				}
 			}
@@ -92,17 +107,6 @@ const parserRosatom = () => {
 
 		if (data.length > 0) {
 			console.log(data);
-			for (const item of data) {
-				const message = `*Номер закупки:* ${item.number}\n\n`
-					+ `*Клиент:* ${item.customer}\n\n`
-					+ `*Описание:* ${item.description}\n\n`
-					+ `*Цена:* ${item.price}\n\n`
-					+ `*Дата публикации:* ${item.published}\n\n`
-					+ `*Окончание:* ${item.end}\n\n`
-					+ `*Ссылка:* ${item.link}`;
-
-				bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
-			}
 		} else {
 			console.log(`Rosatom — нет результатов на дату ${year || date} с минимальной ценой контракта ${minPrice} по запросу «${query}» (${countQueries})`);
 		}

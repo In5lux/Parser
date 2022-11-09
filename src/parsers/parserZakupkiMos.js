@@ -3,8 +3,10 @@ import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 import cheerio from 'cheerio';
-import { options, bot, myEmitter } from '../index.js';
+import { options, bot, myEmitter, db, dbPath } from '../index.js';
+import { writeFileSync } from 'fs';
 import { txtFilterByStopWords } from '../helpers/textFilter.js';
+import { isNew } from '../helpers/isNew.js';
 
 const parserZakupkiMos = () => {
 	const args = getArgs(argv);
@@ -104,6 +106,22 @@ const parserZakupkiMos = () => {
 								if (isCustomer || customer === undefined) {
 									// Фильтр по наименованию клиента
 									data.push(result);
+									if (isNew(db, result.number)) {
+										db.push(result);
+										writeFileSync(dbPath, JSON.stringify(db));
+										const message = `*Номер закупки:* ${result.number}\n\n`
+											+ `*Тип закупки:* ${result.type}\n\n`
+											+ `*ФЗ:* ${result.law}\n\n`
+											+ `*Статус:* ${result.status}\n\n`
+											+ `*Клиент:* ${result.customer}\n\n`
+											+ `*Описание:* ${result.description}\n\n`
+											+ `*Цена:* ${result.price}\n\n`
+											+ `*Дата публикации:* ${result.published}\n\n`
+											+ `*Окончание:* ${result.end}\n\n`
+											+ `*Ссылка:* ${result.link}`;
+
+										bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
+									}
 								}
 							}
 						}
@@ -119,20 +137,6 @@ const parserZakupkiMos = () => {
 
 			if (data.length > 0) {
 				console.log(data);
-				for (const item of data) {
-					const message = `*Номер закупки:* ${item.number}\n\n`
-						+ `*Тип закупки:* ${item.type}\n\n`
-						+ `*ФЗ:* ${item.law}\n\n`
-						+ `*Статус:* ${item.status}\n\n`
-						+ `*Клиент:* ${item.customer}\n\n`
-						+ `*Описание:* ${item.description}\n\n`
-						+ `*Цена:* ${item.price}\n\n`
-						+ `*Дата публикации:* ${item.published}\n\n`
-						+ `*Окончание:* ${item.end}\n\n`
-						+ `*Ссылка:* ${item.link}`;
-
-					bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
-				}
 			} else {
 				console.log(`Zakupki Mos — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}" (${count})\n`);
 			}
