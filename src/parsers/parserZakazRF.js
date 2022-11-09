@@ -3,7 +3,7 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { myEmitter } from '../index.js';
+import { options, bot, myEmitter } from '../index.js';
 
 const parserZakazRF = () => {
 	const args = getArgs(argv);
@@ -112,6 +112,18 @@ const parserZakazRF = () => {
 		if (!isNotExist) {
 			if (data.length > 0) {
 				console.log(data);
+				for (const item of data) {
+					const message = `*Номер закупки:* ${item.number}\n\n`
+						+ `*Тип закупки:* ${item.type}\n\n`
+						+ `*Клиент:* ${item.customer}\n\n`
+						+ `*Описание:* ${item.description}\n\n`
+						+ `*Цена:* ${item.price}\n\n`
+						+ `*Дата публикации:* ${item.published}\n\n`
+						+ `*Окончание:* ${item.end}\n\n`
+						+ `*Ссылка:* ${item.link}`;
+
+					bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
+				}
 			} else {
 				console.log(`ZakazRF — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}" (${countQueries})\n`);
 			}

@@ -3,7 +3,7 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { myEmitter } from '../index.js';
+import { options, bot, myEmitter } from '../index.js';
 
 const parserRosatom = () => {
 	const args = getArgs(argv);
@@ -16,7 +16,7 @@ const parserRosatom = () => {
 	// Формат — node -s "цена контракта (число)" -y "год публикации закупки (гггг)"
 
 	class UrlEncode {
-		constructor (query) {
+		constructor(query) {
 			this.query = query;
 			this.url = `https://zakupki.rosatom.ru/Web.aspx?node=currentorders&ot=${encodeURIComponent(
 				this.query
@@ -92,6 +92,17 @@ const parserRosatom = () => {
 
 		if (data.length > 0) {
 			console.log(data);
+			for (const item of data) {
+				const message = `*Номер закупки:* ${item.number}\n\n`
+					+ `*Клиент:* ${item.customer}\n\n`
+					+ `*Описание:* ${item.description}\n\n`
+					+ `*Цена:* ${item.price}\n\n`
+					+ `*Дата публикации:* ${item.published}\n\n`
+					+ `*Окончание:* ${item.end}\n\n`
+					+ `*Ссылка:* ${item.link}`;
+
+				bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
+			}
 		} else {
 			console.log(`Rosatom — нет результатов на дату ${year || date} с минимальной ценой контракта ${minPrice} по запросу «${query}» (${countQueries})`);
 		}

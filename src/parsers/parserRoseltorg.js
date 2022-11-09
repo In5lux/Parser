@@ -3,7 +3,7 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { myEmitter } from '../index.js';
+import { options, bot, myEmitter } from '../index.js';
 
 const parserRoseltorg = () => {
 	const args = getArgs(argv);
@@ -104,38 +104,54 @@ const parserRoseltorg = () => {
 				}
 
 				$('.search-results__item').each((i, elem) => {
-					const result = {
-						number: $(elem).find('.search-results__lot a').text().split(' ')[0],
-						law: $(elem).find('.search-results__section p.search-results__tooltip').text(),
-						type: $(elem).find('.search-results__type').text(),
-						customer: $(elem).find('.search-results__customer p.search-results__tooltip').text(),
-						description: $(elem).find('.search-results__subject a').text().replace(/[\n\t]/g, ' ').trim(),
-						price: $(elem).find('.search-results__sum p').text(),
-						published: itemsInfo[i].publishDate,
-						end: $(elem).find('.search-results__time').text().replace(/\s{2,}/g, ' '),
-						securing_requisition: itemsInfo[i].securing_requisition,
-						securing_contract: itemsInfo[i].securing_contract,
-						link: 'https://www.roseltorg.ru' + $(elem).find('.search-results__subject a').attr('href'),
-						query
-					};
+					const description = $(elem).find('.search-results__subject a').text().replace(/[\n\t]/g, ' ').trim();
 
-					if (
-						!parseResults.filter((parseResult) => parseResult.number == result.number).length
-						// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
-					) {
-						if (result.published == date || date == '*') {
-							// Фильтр по дате, если дата не указана выводятся все даты
-							const isCustomer = args.c
-								? result.customer.toLowerCase().replaceAll('"', '').match(args.c.toLowerCase())
-								: undefined;
-							if (isCustomer || args.c === undefined) {
-								// Фильтр по наименованию клиента
-								data.push(result);
+					if (description.includes(query.split(' ')[0].slice(0, -2).toLowerCase())) {
+
+						let securing_requisition = itemsInfo[i].securing_requisition;
+
+						let securing_contract = itemsInfo[i].securing_contract;
+
+						securing_requisition = typeof securing_requisition == 'string' && securing_requisition.indexOf('не предусмотрено') == -1
+							? securing_requisition
+							: 'Нет';
+
+						securing_contract = typeof securing_contract == 'string' && securing_contract.indexOf('не предусмотрено') == -1
+							? securing_contract
+							: 'Нет';
+
+						const result = {
+							number: $(elem).find('.search-results__lot a').text().split(' ')[0],
+							law: $(elem).find('.search-results__section p.search-results__tooltip').text(),
+							type: $(elem).find('.search-results__type').text(),
+							customer: $(elem).find('.search-results__customer p.search-results__tooltip').text(),
+							description,
+							price: $(elem).find('.search-results__sum p').text(),
+							published: itemsInfo[i].publishDate,
+							end: $(elem).find('.search-results__time').text().replace(/\s{2,}/g, ' '),
+							securing_requisition,
+							securing_contract,
+							link: 'https://www.roseltorg.ru' + $(elem).find('.search-results__subject a').attr('href'),
+							query
+						};
+
+						if (
+							!parseResults.filter((parseResult) => parseResult.number == result.number).length
+							// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+						) {
+							if (result.published == date || date == '*') {
+								// Фильтр по дате, если дата не указана выводятся все даты
+								const isCustomer = args.c
+									? result.customer.toLowerCase().replaceAll('"', '').match(args.c.toLowerCase())
+									: undefined;
+								if (isCustomer || args.c === undefined) {
+									// Фильтр по наименованию клиента
+									data.push(result);
+								}
 							}
 						}
+						parseResults.push(result);
 					}
-
-					parseResults.push(result);
 				});
 				data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 			}
@@ -146,6 +162,21 @@ const parserRoseltorg = () => {
 
 			if (data.length > 0) {
 				console.log(data);
+				for (const item of data) {
+					const message = `*Номер закупки:* ${item.number}\n\n`
+						+ `*ФЗ:* ${item.law}\n\n`
+						+ `*Тип закупки:* ${item.type}\n\n`
+						+ `*Клиент:* ${item.customer}\n\n`
+						+ `*Описание:* ${item.description}\n\n`
+						+ `*Цена:* ${item.price}\n\n`
+						+ `*Дата публикации:* ${item.published}\n\n`
+						+ `*Окончание:* ${item.end}\n\n`
+						+ `*Обеспечение заявки:* ${item.securing_requisition}\n\n`
+						+ `*Обеспечение договора:* ${item.securing_contract}\n\n`
+						+ `*Ссылка:* ${item.link}`;
+
+					bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
+				}
 			} else {
 				console.log(`Roseltorg — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}" (${count})\n`);
 			}

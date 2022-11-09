@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 import cheerio from 'cheerio';
-import { myEmitter } from '../index.js';
+import { options, bot, myEmitter } from '../index.js';
 
 const parserZakupkiMos = () => {
 	const args = getArgs(argv);
@@ -114,6 +114,20 @@ const parserZakupkiMos = () => {
 
 			if (data.length > 0) {
 				console.log(data);
+				for (const item of data) {
+					const message = `*Номер закупки:* ${item.number}\n\n`
+						+ `*Тип закупки:* ${item.type}\n\n`
+						+ `*ФЗ:* ${item.law}\n\n`
+						+ `*Статус:* ${item.status}\n\n`
+						+ `*Клиент:* ${item.customer}\n\n`
+						+ `*Описание:* ${item.description}\n\n`
+						+ `*Цена:* ${item.price}\n\n`
+						+ `*Дата публикации:* ${item.published}\n\n`
+						+ `*Окончание:* ${item.end}\n\n`
+						+ `*Ссылка:* ${item.link}`;
+
+					bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
+				}
 			} else {
 				console.log(`Zakupki Mos — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}" (${count})\n`);
 			}

@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 import { dateFormat } from '../helpers/dateFormatter.js';
-import { myEmitter } from '../index.js';
+import { options, bot, myEmitter } from '../index.js';
 
 const parserFabrikant = () => {
 	const args = getArgs(argv);
@@ -112,13 +112,26 @@ const parserFabrikant = () => {
 
 		if (data.length > 0) {
 			console.log(data);
+			for (const item of data) {
+				const message = `*Номер закупки:* ${item.number}\n\n`
+					+ `*Статус:* ${item.status}\n\n`
+					+ `*Тип закупки:* ${item.type}\n\n`
+					+ `*Клиент:* ${item.customer}\n\n`
+					+ `*Описание:* ${item.description}\n\n`
+					+ `*Цена:* ${item.price}\n\n`
+					+ `*Дата публикации:* ${item.published}\n\n`
+					+ `*Окончание:* ${item.end}\n\n`
+					+ `*Ссылка:* ${item.link}`;
+
+				bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
+			}
 		} else {
 			console.log(`Fabrikant — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}" (${countQueries})\n`);
 		}
 	};
 
 	const getData = (query) => {
-		const url = new UrlEncode(query, active).url;		
+		const url = new UrlEncode(query, active).url;
 		axios
 			.get(url)
 			.then((res) => {

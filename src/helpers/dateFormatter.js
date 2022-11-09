@@ -10,7 +10,7 @@ const dateDict = {
 	сен: '09',
 	окт: '10',
 	ноя: '11',
-	дек: '12',
+	дек: '12'
 };
 
 const dateFormat = (date) => {

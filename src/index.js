@@ -1,3 +1,7 @@
+#!/usr/bin/env node
+
+import { config } from 'dotenv';
+import { Telegraf } from 'telegraf';
 import { EventEmitter } from 'events';
 import { parserZakupkiGov } from './parsers/parserZakupkiGov.js';
 import { parserRosatom } from './parsers/parserRosatom.js';
@@ -10,6 +14,11 @@ import { parserB2BCenter } from './parsers/parserB2BCenter.js';
 import { parserLOTonline } from './parsers/parserLOTonline.js';
 import { parserRoseltorg } from './parsers/parserRoseltorg.js';
 
+export const options = config();
+export const bot = new Telegraf(options.parsed['TOKEN']);
+
+console.clear();
+
 const parsers = [
 	parserZakupkiGov,
 	parserRosatom,
@@ -20,7 +29,7 @@ const parsers = [
 	parserSberbankAst,
 	parserZakupkiMos,
 	parserLOTonline,
-	parserB2BCenter,
+	parserB2BCenter
 ];
 
 const parsersIterator = parsers[Symbol.iterator]();

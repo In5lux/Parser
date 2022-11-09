@@ -3,7 +3,7 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { myEmitter } from '../index.js';
+import { options, bot, myEmitter } from '../index.js';
 
 const parserB2BCenter = () => {
 	const args = getArgs(argv);
@@ -38,8 +38,7 @@ const parserB2BCenter = () => {
 
 	const parseResults = [];
 
-	console.log(`\nB2B Center — Результаты на ${date === '*' ? 'все опубликованные закупки' : date
-	} с минимальной суммой контракта ${minPrice}\n`
+	console.log(`\nB2B Center — Результаты на ${date === '*' ? 'все опубликованные закупки' : date} с минимальной суммой контракта ${minPrice}\n`
 	);
 
 	const parseData = async (minPrice, queries) => {
@@ -97,7 +96,7 @@ const parserB2BCenter = () => {
 
 						if (
 							!parseResults.filter((parseResult) => parseResult.number == result.number).length
-						// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+							// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
 						) {
 							if (result.published === date || date === '*') {
 								// Фильтр по дате, если дата не указана выводятся все даты
@@ -120,6 +119,17 @@ const parserB2BCenter = () => {
 
 				if (data.length > 0) {
 					console.log(data);
+					for (const item of data) {
+						const message = `*Номер закупки:* ${item.number}\n\n`
+							+ `*Тип закупки:* ${item.type}\n\n`
+							+ `*Клиент:* ${item.customer}\n\n`
+							+ `*Описание:* ${item.description}\n\n`
+							+ `*Дата публикации:* ${item.published}\n\n`
+							+ `*Окончание:* ${item.end}\n\n`
+							+ `*Ссылка:* ${item.link}`;
+
+						bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
+					}
 				} else {
 					console.log(`B2B Center — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query} (${count})"\n`);
 				}

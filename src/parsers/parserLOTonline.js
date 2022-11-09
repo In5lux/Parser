@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 import cheerio from 'cheerio';
-import { myEmitter } from '../index.js';
+import { options, bot, myEmitter } from '../index.js';
 
 const parserLOTonline = () => {
 	const args = getArgs(argv);
@@ -122,6 +122,21 @@ const parserLOTonline = () => {
 
 			if (data.length > 0) {
 				console.log(data);
+				for (const item of data) {
+					const message = `*Номер закупки:* ${item.number}\n\n`
+						+ `*ФЗ:* ${item.law}\n\n`
+						+ `*Статус:* ${item.status}\n\n`
+						+ `*Тип закупки:* ${item.type}\n\n`
+						+ `*Клиент:* ${item.customer}\n\n`
+						+ `*Описание:* ${item.description}\n\n`
+						+ `*Цена:* ${item.price}\n\n`
+						+ `*Дата публикации:* ${item.published}\n\n`
+						+ `*Окончание:* ${item.end}\n\n`
+						+ `*Ссылка:* ${item.link}\n\n`
+						+ `*Документы:* ${item.documents}`;
+
+					bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
+				}
 			} else {
 				console.log(`Lot-online — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query}" (${count})\n`);
 			}

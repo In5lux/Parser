@@ -3,7 +3,7 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { myEmitter } from '../index.js';
+import { options, bot, myEmitter } from '../index.js';
 
 const parserEtpEts = () => {
 	const args = getArgs(argv);
@@ -15,7 +15,7 @@ const parserEtpEts = () => {
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
 	class UrlEncode {
-		constructor (query) {
+		constructor(query) {
 			this.url = `https://etp-ets.ru/44/catalog/procedure?q=${encodeURIComponent(query)}&simple-search=${encodeURIComponent('Искать')}`;
 		}
 	}
@@ -83,7 +83,7 @@ const parserEtpEts = () => {
 
 				if (
 					!parseResults.filter((parseResult) => parseResult.link == result.link).length
-				// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+					// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
 				) {
 					if (result.published == date || date == '*') {
 						// Фильтр по дате, если дата не указана выводятся все даты
@@ -106,6 +106,20 @@ const parserEtpEts = () => {
 		if (!isNotExist) {
 			if (data.length > 0) {
 				console.log(data);
+				for (const item of data) {
+					const message = `*Номер закупки:* ${item.number}\n\n`
+						+ `*Статус:* ${item.status}\n\n`
+						+ `*Тип закупки:* ${item.type}\n\n`
+						+ `*Клиент:* ${item.customer}\n\n`
+						+ `*Описание:* ${item.description}\n\n`
+						+ `*Цена:* ${item.price}\n\n`
+						+ `*Дата публикации:* ${item.published}\n\n`
+						+ `*Окончание:* ${item.end}\n\n`
+						+ `*Ссылка:* ${item.link}\n\n`
+						+ `*Документы:* ${item.documents}`;
+
+					bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
+				}
 			} else {
 				console.log(`Etp Ets 44 — Нет результатов удовлетворяющих критериям поиска на ${date} цена ${minPrice} по запросу "${query}" (${countQueries})\n`);
 			}

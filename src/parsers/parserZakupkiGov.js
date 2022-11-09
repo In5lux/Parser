@@ -3,7 +3,7 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { myEmitter } from '../index.js';
+import { options, bot, myEmitter } from '../index.js';
 
 const parserZakupkiGov = () => {
 	const args = getArgs(argv);
@@ -76,7 +76,8 @@ const parserZakupkiGov = () => {
 	const parseData = (html, minPrice, query) => {
 		let data = [];
 		const $ = cheerio.load(html);
-
+		// eslint-disable-next-line no-debugger
+		debugger;
 		$('.search-registry-entry-block').each((i, elem) => {
 			const result = {
 				number: $(elem).find('.registry-entry__header-mid__number a').text().trim(),
@@ -115,6 +116,19 @@ const parserZakupkiGov = () => {
 
 		if (data.length) {
 			console.log(data);
+			for (const item of data) {
+				const message = `*Номер закупки:* ${item.number}\n\n`
+					+ `*Тип закупки:* ${item.type}\n\n`
+					+ `*Клиент:* ${item.customer}\n\n`
+					+ `*Описание:* ${item.description}\n\n`
+					+ `*Цена:* ${item.price}\n\n`
+					+ `*Дата публикации:* ${item.published}\n\n`
+					+ `*Окончание:* ${item.end}\n\n`
+					+ `*Ссылка:* ${item.link}\n\n`
+					+ `*Документы:* ${item.documents}`;
+
+				bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
+			}
 		} else {
 			console.log(`Zakupki Gov — Нет результатов удовлетворяющих критериям поиска на ${date} с минимальной ценой ${minPrice} по запросу «${query}» (${countQueries})`);
 		}
