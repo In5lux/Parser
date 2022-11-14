@@ -23,8 +23,9 @@ const __dirname = path.dirname(__filename);
 
 export const dbPath = path.join(__dirname, '../db/db.json');
 
-export const options = config();
-export const bot = new Telegraf(options.parsed['TOKEN']);
+config({ path: path.join(__dirname, '../.env') });
+
+export const bot = new Telegraf(process.env.TOKEN);
 export let db = JSON.parse(readFileSync(dbPath, 'utf-8')).flat();
 
 console.clear();

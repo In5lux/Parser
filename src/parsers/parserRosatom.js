@@ -3,7 +3,7 @@ import cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import { options, bot, myEmitter, db, dbPath } from '../index.js';
+import { bot, myEmitter, db, dbPath } from '../index.js';
 import { writeFileSync } from 'fs';
 import { isNew } from '../helpers/isNew.js';
 
@@ -93,7 +93,7 @@ const parserRosatom = () => {
 								+ `*Окончание:* ${result.end}\n\n`
 								+ `*Ссылка:* ${result.link}`;
 
-							bot.telegram.sendMessage(options.parsed['CHAT_ID'], message, { parse_mode: 'Markdown' });
+							bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
 						}
 					}
 				}
