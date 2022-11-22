@@ -7,6 +7,7 @@ import { bot, myEmitter, db, dbPath } from '../index.js';
 import { writeFileSync } from 'fs';
 import { txtFilterByStopWords } from '../helpers/textFilter.js';
 import { isNew } from '../helpers/isNew.js';
+import { priceFilter } from '../helpers/priceFilter.js';
 
 const parserRoseltorg = () => {
 	const args = getArgs(argv);
@@ -150,7 +151,7 @@ const parserRoseltorg = () => {
 								const isCustomer = args.c
 									? result.customer.toLowerCase().replaceAll('"', '').match(args.c.toLowerCase())
 									: undefined;
-								if (isCustomer || args.c === undefined) {
+								if (isCustomer || args.c === undefined && priceFilter(result.price, minPrice)) {
 									// Фильтр по наименованию клиента
 									data.push(result);
 									if (isNew(db, result.number)) {
@@ -176,7 +177,7 @@ const parserRoseltorg = () => {
 						parseResults.push(result);
 					}
 				});
-				data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
+				//data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 			}
 
 			await page.close();

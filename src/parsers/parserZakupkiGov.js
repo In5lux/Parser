@@ -5,9 +5,32 @@ import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 import { bot, myEmitter, db, dbPath } from '../index.js';
 import { writeFileSync } from 'fs';
+import { txtFilterByStopWords } from '../helpers/textFilter.js';
 import { isNew } from '../helpers/isNew.js';
+import { priceFilter } from '../helpers/priceFilter.js';
 
 const parserZakupkiGov = () => {
+
+	// const keepAliveAgent = new agentkeepalive.HttpAgent({
+	// 	maxSockets: 160,
+	// 	maxFreeSockets: 160,
+	// 	timeout: 60000,
+	// 	freeSocketTimeout: 30000,
+	// 	keepAliveMsecs: 60000
+	// });
+
+	// const httpsKeepAliveAgent = new agentkeepalive.HttpsAgent({
+	// 	maxSockets: 160,
+	// 	maxFreeSockets: 160,
+	// 	timeout: 60000,
+	// 	freeSocketTimeout: 30000,
+	// 	keepAliveMsecs: 60000
+	// });
+
+	// const axiosInstance = axios.create({
+	// 	httpAgent: keepAliveAgent,
+	// 	httpsAgent: httpsKeepAliveAgent
+	// });
 
 	const args = getArgs(argv);
 
@@ -67,7 +90,8 @@ const parserZakupkiGov = () => {
 			'Протокольных мероприятий',
 			'Безденежному оформлению и предоставлению',
 			'Организации перевозок по территории РФ',
-			'Транспортно экспедиторское обслуживание'
+			'Транспортно экспедиторское обслуживание',
+			'Бронированию мест размещения'
 		];
 
 	let countQueries = queries.length;
@@ -83,52 +107,59 @@ const parserZakupkiGov = () => {
 		debugger;
 		$('.search-registry-entry-block').each((i, elem) => {
 
-			const result = {
-				number: $(elem).find('.registry-entry__header-mid__number a').text().trim(),
-				type: $(elem).find('.registry-entry__header-top__title').text().replace(/\s{2,}/g, ' ').trim(),
-				customer: $(elem).find('.registry-entry__body-href a').text().trim(),
-				description: $(elem).find('.registry-entry__body-value').text().replace(/\n/g, ''),
-				price: $(elem).find('.price-block .price-block__value').text().trim(),
-				published: $(elem).find('.col-6:first-child .data-block__value').text(),
-				end: $(elem).find('.data-block > .data-block__value').text(),
-				link: 'https://zakupki.gov.ru' + $(elem).find('.registry-entry__header-mid__number a').attr('href')
-			};
-			result.documents = result.link.replace('common-info', 'documents');
+			const description = $(elem).find('.registry-entry__body-value').text().replace(/\n/g, '');
 
 			if (
-				parseResults.filter((parseResult) => parseResult.link == result.link).length == 0
-				// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+				txtFilterByStopWords(description)
+				&& description.includes(query.split(' ')[0].slice(0, -2).toLowerCase())
 			) {
-				if (result.published === date || date === '*') {
-					// Фильтр по дате, если дата не указана выводятся все даты
-					const isCustomer = customer
-						? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
-						: undefined;
-					if (isCustomer || customer === undefined) {
-						// Фильтр по наименованию клиента
-						data.push(result);
-						if (isNew(db, result.number)) {
-							db.push(result);
-							writeFileSync(dbPath, JSON.stringify(db));
-							const message = `*Номер закупки:* ${result.number}\n\n`
-								+ `*Тип закупки:* ${result.type}\n\n`
-								+ `*Клиент:* ${result.customer}\n\n`
-								+ `*Описание:* ${result.description}\n\n`
-								+ `*Цена:* ${result.price}\n\n`
-								+ `*Дата публикации:* ${result.published}\n\n`
-								+ `*Окончание:* ${result.end}\n\n`
-								+ `*Ссылка:* ${result.link}\n\n`
-								+ `*Документы:* ${result.documents}`;
 
-							bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
+				const result = {
+					number: $(elem).find('.registry-entry__header-mid__number a').text().trim(),
+					type: $(elem).find('.registry-entry__header-top__title').text().replace(/\s{2,}/g, ' ').trim(),
+					customer: $(elem).find('.registry-entry__body-href a').text().trim(),
+					description,
+					price: $(elem).find('.price-block .price-block__value').text().trim(),
+					published: $(elem).find('.col-6:first-child .data-block__value').text(),
+					end: $(elem).find('.data-block > .data-block__value').text(),
+					link: 'https://zakupki.gov.ru' + $(elem).find('.registry-entry__header-mid__number a').attr('href')
+				};
+				result.documents = result.link.replace('common-info', 'documents');
+
+				if (
+					parseResults.filter((parseResult) => parseResult.link == result.link).length == 0
+					// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+				) {
+					if (result.published === date || date === '*') {
+						// Фильтр по дате, если дата не указана выводятся все даты
+						const isCustomer = customer
+							? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
+							: undefined;
+						if (isCustomer || customer === undefined && priceFilter(result.price, minPrice)) {
+							// Фильтр по наименованию клиента
+							data.push(result);
+							if (isNew(db, result.number)) {
+								db.push(result);
+								writeFileSync(dbPath, JSON.stringify(db));
+								const message = `*Номер закупки:* ${result.number}\n\n`
+									+ `*Тип закупки:* ${result.type}\n\n`
+									+ `*Клиент:* ${result.customer}\n\n`
+									+ `*Описание:* ${result.description}\n\n`
+									+ `*Цена:* ${result.price}\n\n`
+									+ `*Дата публикации:* ${result.published}\n\n`
+									+ `*Окончание:* ${result.end}\n\n`
+									+ `*Ссылка:* ${result.link}\n\n`
+									+ `*Документы:* ${result.documents}`;
+
+								bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
+							}
 						}
 					}
 				}
+
+				parseResults.push(result);
 			}
-
-			parseResults.push(result);
-
-			data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
+			//data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 		});
 
 		// console.log(`Zakupki Gov — ${query} (${countQueries})`);
@@ -148,6 +179,7 @@ const parserZakupkiGov = () => {
 
 	const getData = (query) => {
 		const url = new UrlEncode(query).url;
+
 		axios
 			.get(url)
 			.then((res) => {

@@ -6,6 +6,7 @@ import cheerio from 'cheerio';
 import { bot, myEmitter, db, dbPath } from '../index.js';
 import { writeFileSync } from 'fs';
 import { isNew } from '../helpers/isNew.js';
+import { priceFilter } from '../helpers/priceFilter.js';
 
 const parserLOTonline = () => {
 	const args = getArgs(argv);
@@ -107,7 +108,7 @@ const parserLOTonline = () => {
 							const isCustomer = customer
 								? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
 								: undefined;
-							if (isCustomer || customer === undefined) {
+							if (isCustomer || customer === undefined && priceFilter(result.price, minPrice)) {
 								// Фильтр по наименованию клиента
 								data.push(result);
 								if (isNew(db, result.number)) {
@@ -132,7 +133,7 @@ const parserLOTonline = () => {
 					}
 					parseResults.push(result);
 
-					data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
+					//data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 				});
 			} else {
 				console.log(`Lot-online — Нет доступных результатов по ключевому запросу "${query}" (${count})\n`);

@@ -6,6 +6,7 @@ import { argv } from 'process';
 import { bot, myEmitter, db, dbPath } from '../index.js';
 import { writeFileSync } from 'fs';
 import { isNew } from '../helpers/isNew.js';
+import { priceFilter } from '../helpers/priceFilter.js';
 
 const parserZakazRF = () => {
 	const args = getArgs(argv);
@@ -96,7 +97,7 @@ const parserZakazRF = () => {
 						const isCustomer = args.c
 							? result.customer.toLowerCase().replaceAll('"', '').match(customer)
 							: undefined;
-						if (isCustomer || args.c === undefined) {
+						if (isCustomer || args.c === undefined && priceFilter(result.price, minPrice)) {
 							// Фильтр по наименованию клиента
 							data.push(result);
 							if (isNew(db, result.number)) {
@@ -119,7 +120,7 @@ const parserZakazRF = () => {
 
 				parseResults.push(result);
 
-				data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
+				//data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 			}
 		});
 

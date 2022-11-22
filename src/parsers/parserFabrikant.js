@@ -7,6 +7,7 @@ import { dateFormat } from '../helpers/dateFormatter.js';
 import { bot, myEmitter, db, dbPath } from '../index.js';
 import { writeFileSync } from 'fs';
 import { isNew } from '../helpers/isNew.js';
+import { priceFilter } from '../helpers/priceFilter.js';
 
 const parserFabrikant = () => {
 	const args = getArgs(argv);
@@ -98,7 +99,7 @@ const parserFabrikant = () => {
 						const isCustomer = customer
 							? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
 							: undefined;
-						if (isCustomer || customer === undefined) {
+						if (isCustomer || customer === undefined && priceFilter(result.price, minPrice)) {
 							// Фильтр по наименованию клиента
 							data.push(result);
 							if (isNew(db, result.number)) {
@@ -121,7 +122,7 @@ const parserFabrikant = () => {
 				}
 				parseResults.push(result);
 
-				data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
+				//data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 			});
 		}
 

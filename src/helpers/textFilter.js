@@ -1,16 +1,44 @@
-export const txtFilterByStopWords = (text) => {
+export const txtFilterByStopWords = (data) => {
 	const stopWords = [
 		'ремонт',
-		'уборке',
-		'автомобильных',
+		'уборк',
+		'автомобильн',
 		'шин',
-		'медицинской',
-		'движения',
-		'уборке',
-		'санитарному'
+		'медицинск',
+		'движен',
+		'санитарн',
+		'стирк',
+		'глажен',
+		'проектн',
+		'бензин',
+		'собак',
+		'корм',
+		'химчистк',
+		'инвестиц',
+		'цветочн',
+		'очистк',
+		'изготовлен',
+		'охран',
+		'топлив',
+		'печать',
+		'мебели',
+		'строительств',
+		'установк',
+		'погрузк',
+		'доставк',
+		'мойк',
+		'беспилотн',
+		'груз',
+		'картрид'
 	];
-	for (const word of stopWords) {
-		if (text.indexOf(word) != -1) return false;
+	if (typeof data == 'string') {
+		const text = data.toLowerCase();
+		//console.log(text);
+		for (const word of stopWords) {
+			if (text.indexOf(word) != -1) return false;
+		}
+	} else if (typeof data != 'string') {
+		return false;
 	}
 	return true;
 };
