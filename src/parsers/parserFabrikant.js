@@ -82,10 +82,13 @@ const parserFabrikant = () => {
 					price: $(elem).find('.marketplace-unit__price span strong').text().trim() || $(elem).find('.marketplace-unit__price p').text().trim() || $(elem).find('.marketplace-unit__price>span').text().trim(),
 					published: $(elem).find('.marketplace-unit__state__wrap>.marketplace-unit__state:first-child .dt').text(),
 					end: $(elem).find('.marketplace-unit__state__wrap>.marketplace-unit__state:last-child .dt').text(),
-					link: 'https://www.fabrikant.ru' + $(elem).find('.marketplace-unit__title a').attr('href')
+					link: $(elem).find('.marketplace-unit__title a').attr('href')
 				};
 
-				result.link = result.link.includes('etp-ets') ? result.link.replace('https://www.fabrikant.ru', '') : result.link;
+				result.link = result.link != undefined && !result.link.includes('etp-ets') && !result.link.includes('fabrikant')
+					? 'https://www.fabrikant.ru'.concat(result.link)
+					: result.link;
+
 				result.published = dateFormat(result.published);
 				result.end = dateFormat(result.end);
 				result.price = result.price != 'Участие бесплатно' ? result.price : '0';
@@ -137,6 +140,7 @@ const parserFabrikant = () => {
 
 	const getData = (query) => {
 		const url = new UrlEncode(query, active).url;
+
 		axios
 			.get(url)
 			.then((res) => {
