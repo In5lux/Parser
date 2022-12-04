@@ -13,6 +13,7 @@ import { parserSberbankAst } from './parsers/parserSberbankAst.js';
 import { parserB2BCenter } from './parsers/parserB2BCenter.js';
 import { parserLOTonline } from './parsers/parserLOTonline.js';
 import { parserRoseltorg } from './parsers/parserRoseltorg.js';
+import { parserEtpGPB } from './parsers/parserEtpGPB.js';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -24,7 +25,6 @@ const __dirname = path.dirname(__filename);
 export const dbPath = path.join(__dirname, '../db/db.json');
 
 config({ path: path.join(__dirname, '../.env') });
-
 export const bot = new Telegraf(process.env.TOKEN);
 export let db = JSON.parse(readFileSync(dbPath, 'utf-8')).flat();
 
@@ -40,7 +40,8 @@ const parsers = [
 	parserSberbankAst,
 	parserZakupkiMos,
 	parserLOTonline,
-	parserB2BCenter
+	parserB2BCenter,
+	parserEtpGPB
 ];
 
 const parsersIterator = parsers[Symbol.iterator]();
