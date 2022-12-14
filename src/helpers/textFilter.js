@@ -29,11 +29,18 @@ export const txtFilterByStopWords = (data) => {
 		'мойк',
 		'беспилотн',
 		'груз',
-		'картрид'
+		'картрид',
+		'стоянк',
+		'содерж',
+		'технического обслуживания',
+		'техническому обслуживанию',
+		'техническое обслуживание',
+		'техническому осмотру',
+		'керосин',
+		'древес'
 	];
 	if (typeof data == 'string') {
 		const text = data.toLowerCase();
-		//console.log(text);
 		for (const word of stopWords) {
 			if (text.indexOf(word) != -1) return false;
 		}

@@ -8,6 +8,7 @@ import { writeFileSync } from 'fs';
 import { txtFilterByStopWords } from '../helpers/textFilter.js';
 import { isNew } from '../helpers/isNew.js';
 import { priceFilter } from '../helpers/priceFilter.js';
+import { collectData } from '../helpers/collectData.js';
 
 const parserZakupkiMos = () => {
 	const args = getArgs(argv);
@@ -61,13 +62,24 @@ const parserZakupkiMos = () => {
 			const url = new UrlEncode(query).url;
 			const page = await browser.newPage();
 			page.setDefaultNavigationTimeout(0);
-			// await page.waitForTimeout(3000);
-			await page.goto(url, { waitUntil: 'networkidle2' });
-			await page.waitForTimeout(5000);
+			let HTML = false;
+			let attempts = 0;
+			// Retry request until it gets data or tries 5 times
+			while (HTML === false && attempts < 5) {
+				HTML = await collectData(page, url);
+				attempts += 1;
+				if (HTML === false) {
+					await new Promise((resolve) => setTimeout(resolve, 3000));
+				}
+			}
+
+			// await page.goto(url, { waitUntil: 'networkidle2' });
+			// await page.waitForTimeout(5000);
 			// await page.setViewport({ width: 1263, height: 930 })
 			// await page.screenshot({ path: 'page.png' });
 			// await page.pdf({ path: `page ${query}.pdf`, printBackground: true, width: '1263px', height: '930px' });
-			const HTML = await page.content();
+			//const HTML = await page.content();
+
 			const $ = cheerio.load(HTML);
 
 			await page.close();
@@ -91,7 +103,7 @@ const parserZakupkiMos = () => {
 							description,
 							price: $(elem).find('.CardStyles__PriceInfoNumber-sc-18miw4v-9').text(),
 							published: $(elem).find('.CardStyles__AdditionalInfoHeader-sc-18miw4v-11:nth-child(3)>span').text().split(' ')[1],
-							end: $(elem).find('.CardStyles__AdditionalInfoHeader-sc-18miw4v-11:nth-child(3)>span').text().split(' ')[3],
+							end: $(elem).find('.CardStyles__AdditionalInfoHeader-sc-18miw4v-11:nth-child(3)>span').text().split(' ')[3]?.trim() || '—',
 							link: 'https://zakupki.mos.ru' + $(elem).find('a.CardStyles__MainInfoNameHeader-sc-18miw4v-8').attr('href')
 						};
 
