@@ -1,0 +1,14 @@
+version: "3"
+services:
+  parser:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    restart: always
+    container_name: parser
+    volumes:
+      - ../configs/.env-parser:/opt/app/.env
+      - ../db/db.json:/opt/app/db/db.json
+networks:
+  myNetwork:
+    driver: bridge
