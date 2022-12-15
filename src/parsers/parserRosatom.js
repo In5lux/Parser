@@ -64,7 +64,7 @@ const parserRosatom = () => {
 				description: $(elem).find('td.description>p:nth-child(2)>a').text().replace(/\n/g, ' '),
 				price: $(elem).find('tr td:nth-child(4)>p:first-child').text().trim(),
 				published: $(elem).find('td:nth-child(6)>p').text().trim(),
-				end: $(elem).find('td:nth-child(7)>p').text().replace(/\s{2,}/gm, ' '),
+				end: $(elem).find('td:nth-child(7)>p').text().replace(/\s{2,}/gm, ' ')?.trim() || '—',
 				link: 'https://zakupki.rosatom.ru' + $(elem).find('td.description>p:nth-child(2)>a').attr('href')
 			};
 

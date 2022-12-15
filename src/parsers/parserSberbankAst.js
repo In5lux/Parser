@@ -49,11 +49,11 @@ const parserSberbankAst = () => {
 	);
 
 	const parseData = async (minPrice, queries) => {
-		const browserFetcher = puppeteer.createBrowserFetcher();
-		const revisionInfo = await browserFetcher.download('991974');
+		// const browserFetcher = puppeteer.createBrowserFetcher();
+		// const revisionInfo = await browserFetcher.download('991974');
 
 		const browser = await puppeteer.launch({
-			executablePath: revisionInfo.executablePath,
+			// executablePath: revisionInfo.executablePath,
 			headless: true, // false: enables one to view the Chrome instance in action
 			// defaultViewport: { width: 1263, height: 930 }, // optional
 			slowMo: 25
@@ -68,10 +68,10 @@ const parserSberbankAst = () => {
 			await page.goto('https://www.sberbank-ast.ru', { waitUntil: 'networkidle2' });
 			await page.waitForSelector('#txtUnitedPurchaseSearch');
 			await page.focus('#txtUnitedPurchaseSearch');
-			await page.waitForTimeout(1000);
+			new Promise(r => setTimeout(r, 1000));
 			await page.keyboard.type(query);
 			await page.click('#btnUnitedPurchaseSearch');
-			await page.waitForTimeout(3000);
+			new Promise(r => setTimeout(r, 3000));
 			// await page.screenshot({ path: `page ${query}.png` });
 			const html = await page.evaluate(() => {
 				try {

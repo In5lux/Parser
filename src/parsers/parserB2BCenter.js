@@ -61,19 +61,19 @@ const parserB2BCenter = () => {
 				// await page.focus('#lfm0');
 				await page.waitForSelector('#f_keyword');
 				await page.focus('#f_keyword');
-				await page.waitForTimeout(1000);
+				new Promise(r => setTimeout(r, 1000));
 				await page.keyboard.type(query);
-				await page.waitForTimeout(2000);
+				new Promise(r => setTimeout(r, 2000));
 				await page.click('#search_button');
 				// await page.keyboard.down('Tab');
 				// await page.keyboard.down('Enter');
 				// await page.screenshot({ path: `page ${query}.png` });
-				await page.waitForTimeout(2000);
+				new Promise(r => setTimeout(r, 2000));
 				const html = await page.content();
 
 				const $ = cheerio.load(html);
 
-				await page.waitForTimeout(2000);
+				new Promise(r => setTimeout(r, 2000));
 				await page.close();
 
 				const isExsist = !$('body').text().includes('нет актуальных торговых процедур');
@@ -88,7 +88,7 @@ const parserB2BCenter = () => {
 							customer: $(elem).find('td:nth-child(2)>a').text(),
 							description: $(elem).find('div.search-results-title-desc').text().replace(/\n/g, ' '),
 							published: $(elem).find('td:nth-child(3)').text().split(' ')[0],
-							end: $(elem).find('td:last-child').text().split(' ')[0],
+							end: $(elem).find('td:last-child').text().split(' ')[0]?.trim() || '—',
 							link: $(elem).find('td:first-child>a').attr('href')
 						};
 

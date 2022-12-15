@@ -81,11 +81,13 @@ const parserFabrikant = () => {
 					description: $(elem).find('.marketplace-unit__title a').text().trim(),
 					price: $(elem).find('.marketplace-unit__price span strong').text().trim() || $(elem).find('.marketplace-unit__price p').text().trim() || $(elem).find('.marketplace-unit__price>span').text().trim(),
 					published: $(elem).find('.marketplace-unit__state__wrap>.marketplace-unit__state:first-child .dt').text(),
-					end: $(elem).find('.marketplace-unit__state__wrap>.marketplace-unit__state:last-child .dt').text(),
+					end: $(elem).find('.marketplace-unit__state__wrap>.marketplace-unit__state:last-child .dt').text()?.trim() || '—',
 					link: $(elem).find('.marketplace-unit__title a').attr('href')
 				};
 
-				result.link = result.link != undefined && !result.link.includes('etp-ets') && !result.link.includes('fabrikant')
+				result.link = result.link != undefined
+					&& !result.link.includes('etp-ets')
+					&& !result.link.includes('fabrikant')
 					? 'https://www.fabrikant.ru'.concat(result.link)
 					: result.link;
 

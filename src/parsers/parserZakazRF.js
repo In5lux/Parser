@@ -84,7 +84,7 @@ const parserZakazRF = () => {
 					description: $(elem).find('td:nth-child(5)').text(),
 					price: $(elem).find('td:nth-child(6)').text() + ' руб.',
 					published: $(elem).find('td:nth-child(10)').text(),
-					end: $(elem).find('td:nth-child(12)').text(),
+					end: $(elem).find('td:nth-child(12)').text()?.trim() || '—',
 					link: 'http://zakazrf.ru' + $(elem).find('td:nth-child(2)>a').attr('href')
 				};
 

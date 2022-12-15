@@ -92,7 +92,7 @@ const parserLOTonline = () => {
 						description: $(elem).find('div>div.row.col-12.mb-2.mt-4.pl-md-0>div.col-12.col-md-8>div.row.col-12.p-md-0.mx-md-0.__purchaseObjectInfo>p').text().replace(/[\n\t]/g, ' ').trim(),
 						price: $(elem).find('.card-div__maxSum').text(),
 						published: $(elem).find('.__publication-date').text().split(' ')[1],
-						end: $(elem).find('div>div.row.col-12.mb-2.mt-4.pl-md-0>div.col-12.col-md-4.pl-md-0.card-div__procedureStatus.ng-star-inserted>span:nth-child(4)').text().split(' ')[4] || '—',
+						end: $(elem).find('div>div.row.col-12.mb-2.mt-4.pl-md-0>div.col-12.col-md-4.pl-md-0.card-div__procedureStatus.ng-star-inserted>span:nth-child(4)').text().split(' ')[4]?.trim() || '—',
 						link: 'https://gz.lot-online.ru' + $(elem).find('a.__link_purchase-number').attr('href'),
 						documents: 'https://gz.lot-online.ru' + $(elem).find('a.__link_purchase-number').attr('href').replace('common', 'documentation')
 					};

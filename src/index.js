@@ -17,6 +17,8 @@ import { parserEtpGPB } from './parsers/parserEtpGPB.js';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getArgs } from './helpers/args.js';
+import { argv } from 'process';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -44,7 +46,7 @@ const parsers = [
 	parserEtpGPB
 ];
 
-const parsersIterator = parsers[Symbol.iterator]();
+export const parsersIterator = parsers[Symbol.iterator]();
 
 export const myEmitter = new EventEmitter();
 
@@ -55,4 +57,7 @@ myEmitter.on('next', () => {
 
 console.log(new Date().toLocaleString());
 
-parsersIterator.next().value();
+const args = getArgs(argv);
+if (args.cmd) {
+	parsersIterator.next().value();
+}

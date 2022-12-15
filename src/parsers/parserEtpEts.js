@@ -79,7 +79,7 @@ const parserEtpEts = () => {
 					description: $(elem).find('td.row-procedure_name a').text().replace(/\n/g, ' '),
 					price: $(elem).find('td.row-contract_start_price').text(),
 					published: $(elem).find('td.row-publication_datetime').text().slice(0, 10),
-					end: $(elem).find('td.row-request_end_give_datetime').text(),
+					end: $(elem).find('td.row-request_end_give_datetime').text()?.trim() || '—',
 					link: $(elem).find('td.row-procedure_name a').attr('href'),
 					documents: $(elem).find('td.row-procedure_name a').attr('href')?.replace('procedure', 'documentation')
 				};

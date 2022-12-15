@@ -103,8 +103,7 @@ const parserZakupkiGov = () => {
 	const parseData = (html, minPrice, query) => {
 		let data = [];
 		const $ = cheerio.load(html);
-		// eslint-disable-next-line no-debugger
-		debugger;
+		// eslint-disable-next-line no-debugger		
 		$('.search-registry-entry-block').each((i, elem) => {
 
 			const description = $(elem).find('.registry-entry__body-value').text().replace(/\n/g, '');
@@ -121,7 +120,7 @@ const parserZakupkiGov = () => {
 					description,
 					price: $(elem).find('.price-block .price-block__value').text().trim(),
 					published: $(elem).find('.col-6:first-child .data-block__value').text(),
-					end: $(elem).find('.data-block > .data-block__value').text(),
+					end: $(elem).find('.data-block > .data-block__value').text()?.trim() || '—',
 					link: 'https://zakupki.gov.ru' + $(elem).find('.registry-entry__header-mid__number a').attr('href')
 				};
 				result.documents = result.link.replace('common-info', 'documents');

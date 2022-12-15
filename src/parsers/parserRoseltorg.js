@@ -72,7 +72,7 @@ const parserRoseltorg = () => {
 			// page.on('domcontentloaded', () => console.log('dom fired'));
 			// await page.waitForTimeout(3000);
 			await page.goto(url, { waitUntil: 'networkidle2' });
-
+			new Promise(r => setTimeout(r, 1000));
 			// await page.screenshot({ path: `page — ${query}.png` });
 			// await page.pdf({ path: `page ${query}.pdf`, printBackground: true, width: '1263px', height: '930px' });
 			const html = await page.content();
@@ -135,7 +135,7 @@ const parserRoseltorg = () => {
 							description,
 							price: $(elem).find('.search-results__sum p').text(),
 							published: itemsInfo[i].publishDate,
-							end: $(elem).find('.search-results__time').text().replace(/\s{2,}/g, ' '),
+							end: $(elem).find('.search-results__time').text().replace(/\s{2,}/g, ' ')?.trim() || '—',
 							securing_requisition,
 							securing_contract,
 							link: 'https://www.roseltorg.ru' + $(elem).find('.search-results__subject a').attr('href'),

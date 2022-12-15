@@ -70,8 +70,8 @@ const parserEtpGPB = () => {
 			// await page.waitForTimeout(1000);
 			// await page.keyboard.type(query);
 			//await page.click('.globalProceduresSearch__searchBtn');
-			// await page.keyboard.down('Enter');
-			await page.waitForTimeout(3000);
+			// await page.keyboard.down('Enter');			
+			new Promise(r => setTimeout(r, 3000));
 			// // await page.screenshot({ path: `page ${query}.png` });
 			const html = await page.content();
 
