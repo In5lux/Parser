@@ -11,6 +11,6 @@ RUN apt-get update \
 WORKDIR /opt/app
 ADD *.json ./
 ADD *.cjs ./
-RUN npm install
+RUN npm install --omit=dev
 ADD . .
 CMD ["node", "./src/index.js", "-cmd"]

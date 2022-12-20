@@ -5,9 +5,12 @@ import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 import { bot, myEmitter, db, dbPath } from '../index.js';
 import { writeFileSync } from 'fs';
+import { txtFilterByStopWords } from '../helpers/textFilter.js';
 import { isNew } from '../helpers/isNew.js';
+import { collectData } from '../helpers/collectData.js';
 
 const parserB2BCenter = () => {
+
 	const args = getArgs(argv);
 
 	const minPrice = args.s ? args.s : 300000;
@@ -45,7 +48,7 @@ const parserB2BCenter = () => {
 
 	const parseData = async (minPrice, queries) => {
 		const browser = await puppeteer.launch({
-			// headless: true, // false: enables one to view the Chrome instance in action
+			// headless: false, // false: enables one to view the Chrome instance in action
 			defaultViewport: { width: 1400, height: 700 }, // optional
 			slowMo: 25,
 			args: ['--no-sandbox', '--headless', '--disable-gpu']
@@ -54,47 +57,41 @@ const parserB2BCenter = () => {
 		let count = queries.length;
 
 		for (const query of queries) {
-			try {
-				const page = await browser.newPage();
-				page.setDefaultNavigationTimeout(0);
-				await page.goto('https://www.b2b-center.ru/market/', { waitUntil: 'networkidle2' });
-				// await page.waitForSelector('#lfm0');
-				// await page.focus('#lfm0');
-				await page.waitForSelector('#f_keyword');
-				await page.focus('#f_keyword');
-				await new Promise(r => setTimeout(r, 1000));
-				await page.keyboard.type(query);
-				await page.click('#search_button');
-				await new Promise(r => setTimeout(r, 2000));
-				// await page.keyboard.down('Tab');
-				// await page.keyboard.down('Enter');
-				// await page.screenshot({ path: `page ${query}.png` });
+			const page = await browser.newPage();
+			page.setDefaultNavigationTimeout(0);
+			const url = 'https://www.b2b-center.ru/market/';
+			let HTML = false;
+			let attempts = 0;
+			// Retry request until it gets data or tries 5 times
+			while (HTML === false && attempts < 5) {
+				HTML = await collectData(page, url, query, 'b2b-center.ru');
+				attempts += 1;
+				if (HTML === false) {
+					await new Promise((resolve) => setTimeout(resolve, 3000));
+				}
+			}
+			await new Promise(r => setTimeout(r, 2000));
 
-				const html = await page.evaluate(() => {
-					try {
-						// eslint-disable-next-line no-undef
-						return document.documentElement.outerHTML;
-					} catch (e) {
-						return e.toString();
-					}
-				});
-				await new Promise(r => setTimeout(r, 2000));
-				await page.close();
-				//const html = await page.content();
+			const $ = cheerio.load(HTML);
 
-				const $ = cheerio.load(html);
+			const isExsist = !$('body').text().includes('нет актуальных торговых процедур');
 
-				const isExsist = !$('body').text().includes('нет актуальных торговых процедур');
+			const data = [];
 
-				const data = [];
+			if (isExsist) {
+				$('table.search-results>tbody>tr').each((i, elem) => {
+					const description = $(elem).find('div.search-results-title-desc').text().replace(/\n/g, ' ');
 
-				if (isExsist) {
-					$('table.search-results>tbody>tr').each((i, elem) => {
+					if (
+						txtFilterByStopWords(description)
+						&& description.includes(query.split(' ')[0].slice(0, -2).toLowerCase())
+					) {
+
 						const result = {
 							number: $(elem).find('td:first-child>a').text().match(/№\s\d{1,}/g)[0],
 							type: $(elem).find('td:first-child>a').text().match(/^[а-яА-Я\s]+[а-я]/g)[0],
 							customer: $(elem).find('td:nth-child(2)>a').text(),
-							description: $(elem).find('div.search-results-title-desc').text().replace(/\n/g, ' '),
+							description,
 							published: $(elem).find('td:nth-child(3)').text().split(' ')[0],
 							end: $(elem).find('td:last-child').text().split(' ')[0]?.trim() || '—',
 							link: $(elem).find('td:first-child>a').attr('href')
@@ -134,22 +131,20 @@ const parserB2BCenter = () => {
 							// data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 						}
 						parseResults.push(result);
-					});
-				} else {
-					console.log(`B2B Center — Нет доступных результатов по ключевому запросу "${query} (${count})"\n`);
-				}
-				// console.log(`B2B Center — ${query} (${count})`);
+					}
+				});
+			} else {
+				console.log(`B2B Center — Нет доступных результатов по ключевому запросу "${query} (${count})"\n`);
+			}
 
-				if (data.length > 0) {
-					console.log(data);
-				} else {
-					console.log(`B2B Center — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query} (${count})"\n`);
-				}
-			} catch (error) {
-				const isError = (err) => err instanceof Error;
-				if (isError(error)) {
-					console.error(`${query} — ${error.message}\n`);
-				}
+			await page.close();
+
+			// console.log(`B2B Center — ${query} (${count})`);
+
+			if (data.length > 0) {
+				console.log(data);
+			} else {
+				console.log(`B2B Center — Нет результатов удовлетворяющих критериям поиска (цена, дата) по запросу "${query} (${count})"\n`);
 			}
 
 			count--;
