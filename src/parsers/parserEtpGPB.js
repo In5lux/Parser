@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer';
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';
 import { format, subDays } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
@@ -48,14 +48,15 @@ const parserEtpGPB = () => {
 	);
 
 	const parseData = async (minPrice, queries) => {
-		const browserFetcher = puppeteer.createBrowserFetcher();
-		const revisionInfo = await browserFetcher.download('991974');
+		// const browserFetcher = puppeteer.createBrowserFetcher();
+		// const revisionInfo = await browserFetcher.download('991974');
 
 		const browser = await puppeteer.launch({
-			executablePath: revisionInfo.executablePath,
-			headless: true, // false: enables one to view the Chrome instance in action
+			// executablePath: revisionInfo.executablePath,
+			// headless: true, // false: enables one to view the Chrome instance in action
 			defaultViewport: { width: 1280, height: 1024 }, // optional
-			slowMo: 25
+			slowMo: 25,
+			args: ['--no-sandbox', '--headless', '--disable-gpu']
 		});
 
 		let count = queries.length;
@@ -71,7 +72,7 @@ const parserEtpGPB = () => {
 			// await page.keyboard.type(query);
 			//await page.click('.globalProceduresSearch__searchBtn');
 			// await page.keyboard.down('Enter');			
-			new Promise(r => setTimeout(r, 3000));
+			await new Promise(r => setTimeout(r, 2000));
 			// // await page.screenshot({ path: `page ${query}.png` });
 			const html = await page.content();
 

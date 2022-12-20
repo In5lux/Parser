@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';
 import { bot, myEmitter, db, dbPath } from '../index.js';
 import { writeFileSync } from 'fs';
 import { txtFilterByStopWords } from '../helpers/textFilter.js';
@@ -46,14 +46,15 @@ const parserZakupkiMos = () => {
 	);
 
 	const parseData = async (minPrice, queries) => {
-		const browserFetcher = puppeteer.createBrowserFetcher();
-		const revisionInfo = await browserFetcher.download('991974');
+		// const browserFetcher = puppeteer.createBrowserFetcher();
+		// const revisionInfo = await browserFetcher.download('991974');
 
 		const browser = await puppeteer.launch({
-			executablePath: revisionInfo.executablePath,
+			// executablePath: revisionInfo.executablePath,
 			headless: true, // false: enables one to view the Chrome instance in action
 			// defaultViewport: { width: 1263, height: 930 }, // optional
-			slowMo: 25
+			slowMo: 25,
+			args: ['--no-sandbox', '--headless', '--disable-gpu']
 		});
 
 		let count = queries.length;

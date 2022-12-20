@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';
 import { bot, myEmitter, db, dbPath } from '../index.js';
 import { writeFileSync } from 'fs';
 import { isNew } from '../helpers/isNew.js';
@@ -45,14 +45,15 @@ const parserLOTonline = () => {
 	);
 
 	const parseData = async (minPrice, queries) => {
-		const browserFetcher = puppeteer.createBrowserFetcher();
-		const revisionInfo = await browserFetcher.download('991974');
+		// const browserFetcher = puppeteer.createBrowserFetcher();
+		// const revisionInfo = await browserFetcher.download('991974');
 
 		const browser = await puppeteer.launch({
-			executablePath: revisionInfo.executablePath,
-			headless: true, // false: enables one to view the Chrome instance in action
+			// executablePath: revisionInfo.executablePath,
+			// headless: true, // false: enables one to view the Chrome instance in action
 			// defaultViewport: { width: 1263, height: 930 }, // optional
-			slowMo: 25
+			slowMo: 25,
+			args: ['--no-sandbox', '--headless', '--disable-gpu']
 		});
 
 		let count = queries.length;
@@ -61,8 +62,8 @@ const parserLOTonline = () => {
 			const url = new UrlEncode(query).url;
 			const page = await browser.newPage();
 			page.setDefaultNavigationTimeout(0);
-			// await page.waitForTimeout(3000);
 			await page.goto(url, { waitUntil: 'networkidle2' });
+			await new Promise(r => setTimeout(r, 1000));
 			// await page.setViewport({ width: 1263, height: 930 });
 			// await page.waitForSelector('div.mat-expansion-panel-body div div input');
 			// await page.focus('div.mat-expansion-panel-body div div input');

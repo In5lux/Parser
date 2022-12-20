@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer';
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
@@ -45,9 +45,10 @@ const parserB2BCenter = () => {
 
 	const parseData = async (minPrice, queries) => {
 		const browser = await puppeteer.launch({
-			headless: true, // false: enables one to view the Chrome instance in action
+			// headless: true, // false: enables one to view the Chrome instance in action
 			defaultViewport: { width: 1400, height: 700 }, // optional
-			slowMo: 25
+			slowMo: 25,
+			args: ['--no-sandbox', '--headless', '--disable-gpu']
 		});
 
 		let count = queries.length;
@@ -55,26 +56,33 @@ const parserB2BCenter = () => {
 		for (const query of queries) {
 			try {
 				const page = await browser.newPage();
-				// page.setDefaultNavigationTimeout(0);
+				page.setDefaultNavigationTimeout(0);
 				await page.goto('https://www.b2b-center.ru/market/', { waitUntil: 'networkidle2' });
 				// await page.waitForSelector('#lfm0');
 				// await page.focus('#lfm0');
 				await page.waitForSelector('#f_keyword');
 				await page.focus('#f_keyword');
-				new Promise(r => setTimeout(r, 1000));
+				await new Promise(r => setTimeout(r, 1000));
 				await page.keyboard.type(query);
-				new Promise(r => setTimeout(r, 2000));
 				await page.click('#search_button');
+				await new Promise(r => setTimeout(r, 2000));
 				// await page.keyboard.down('Tab');
 				// await page.keyboard.down('Enter');
 				// await page.screenshot({ path: `page ${query}.png` });
-				new Promise(r => setTimeout(r, 2000));
-				const html = await page.content();
+
+				const html = await page.evaluate(() => {
+					try {
+						// eslint-disable-next-line no-undef
+						return document.documentElement.outerHTML;
+					} catch (e) {
+						return e.toString();
+					}
+				});
+				await new Promise(r => setTimeout(r, 2000));
+				await page.close();
+				//const html = await page.content();
 
 				const $ = cheerio.load(html);
-
-				new Promise(r => setTimeout(r, 2000));
-				await page.close();
 
 				const isExsist = !$('body').text().includes('нет актуальных торговых процедур');
 

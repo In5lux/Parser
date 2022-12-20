@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer';
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';
 import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
@@ -54,9 +54,10 @@ const parserSberbankAst = () => {
 
 		const browser = await puppeteer.launch({
 			// executablePath: revisionInfo.executablePath,
-			headless: true, // false: enables one to view the Chrome instance in action
+			// headless: true, // false: enables one to view the Chrome instance in action
 			// defaultViewport: { width: 1263, height: 930 }, // optional
-			slowMo: 25
+			slowMo: 25,
+			args: ['--no-sandbox', '--headless', '--disable-gpu']
 		});
 
 		let count = queries.length;
@@ -68,10 +69,10 @@ const parserSberbankAst = () => {
 			await page.goto('https://www.sberbank-ast.ru', { waitUntil: 'networkidle2' });
 			await page.waitForSelector('#txtUnitedPurchaseSearch');
 			await page.focus('#txtUnitedPurchaseSearch');
-			new Promise(r => setTimeout(r, 1000));
+			await new Promise(r => setTimeout(r, 1000));
 			await page.keyboard.type(query);
 			await page.click('#btnUnitedPurchaseSearch');
-			new Promise(r => setTimeout(r, 3000));
+			await new Promise(r => setTimeout(r, 3000));
 			// await page.screenshot({ path: `page ${query}.png` });
 			const html = await page.evaluate(() => {
 				try {
