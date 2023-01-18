@@ -8,17 +8,21 @@ import { bot, myEmitter, db, dbPath } from '../index.js';
 import { writeFileSync } from 'fs';
 import { isNew } from '../helpers/isNew.js';
 import { priceFilter } from '../helpers/priceFilter.js';
+import { searchParams } from '../main.js';
 
 const parserFabrikant = () => {
+
+	let delay = 0;
+
 	const args = getArgs(argv);
 
-	const minPrice = args.s ? args.s : 300000;
+	const minPrice = args.s || searchParams?.price || 300000;
 
-	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
+	const date = searchParams?.date || args.d || format(new Date(), 'dd.MM.yyyy');
 
 	const active = args.a ? '0' : '1'; // -a поиск по архивным закупкам
 
-	const customer = args.c?.toLowerCase();
+	const customer = args.c?.toLowerCase() || searchParams?.client;
 
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
@@ -120,7 +124,10 @@ const parserFabrikant = () => {
 									+ `*Окончание:* ${result.end}\n\n`
 									+ `*Ссылка:* ${result.link}`;
 
-								bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
+								setTimeout(() => {
+									bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
+								}, delay);
+								delay += 1000;
 							}
 						}
 					}

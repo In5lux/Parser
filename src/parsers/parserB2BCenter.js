@@ -8,16 +8,19 @@ import { writeFileSync } from 'fs';
 import { txtFilterByStopWords } from '../helpers/textFilter.js';
 import { isNew } from '../helpers/isNew.js';
 import { collectData } from '../helpers/collectData.js';
+import { searchParams } from '../main.js';
 
 const parserB2BCenter = () => {
 
+	let delay = 0;
+
 	const args = getArgs(argv);
 
-	const minPrice = args.s ? args.s : 300000;
+	const minPrice = args.s || searchParams?.price || 300000;
 
-	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
+	const date = searchParams?.date || args.d || format(new Date(), 'dd.MM.yyyy');
 
-	const customer = args.c?.toLowerCase();
+	const customer = args.c?.toLowerCase() || searchParams?.client;
 
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
@@ -48,35 +51,37 @@ const parserB2BCenter = () => {
 
 	const parseData = async (minPrice, queries) => {
 		const browser = await puppeteer.launch({
-			// headless: false, // false: enables one to view the Chrome instance in action
+			headless: true, // false: enables one to view the Chrome instance in action
 			defaultViewport: { width: 1400, height: 700 }, // optional
 			slowMo: 25,
-			args: ['--no-sandbox', '--headless', '--disable-gpu']
+			// args: ['--no-sandbox', '--headless', '--disable-gpu']
 		});
 
 		let count = queries.length;
 
 		for (const query of queries) {
 			const page = await browser.newPage();
-			page.setDefaultNavigationTimeout(0);
-			const url = 'https://www.b2b-center.ru/market/';
+			page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36');
 			let HTML = false;
 			let attempts = 0;
+			const url = 'https://www.b2b-center.ru/market/';
 			// Retry request until it gets data or tries 5 times
 			while (HTML === false && attempts < 5) {
+				console.log(`B2B Center — попытка ${attempts} загрузки данных страницы по запросу "${query}"`);
 				HTML = await collectData(page, url, query, 'b2b-center.ru');
 				attempts += 1;
 				if (HTML === false) {
 					await new Promise((resolve) => setTimeout(resolve, 3000));
 				}
 			}
-			await new Promise(r => setTimeout(r, 2000));
 
 			const $ = cheerio.load(HTML);
 
+			await page.close();
+
 			const isExsist = !$('body').text().includes('нет актуальных торговых процедур');
 
-			const data = [];
+			let data = [];
 
 			if (isExsist) {
 				$('table.search-results>tbody>tr').each((i, elem) => {
@@ -124,7 +129,10 @@ const parserB2BCenter = () => {
 											+ `*Окончание:* ${result.end}\n\n`
 											+ `*Ссылка:* ${result.link}`;
 
-										bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
+										setTimeout(() => {
+											bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
+										}, delay);
+										delay += 1000;
 									}
 								}
 							}
@@ -136,8 +144,6 @@ const parserB2BCenter = () => {
 			} else {
 				console.log(`B2B Center — Нет доступных результатов по ключевому запросу "${query} (${count})"\n`);
 			}
-
-			await page.close();
 
 			// console.log(`B2B Center — ${query} (${count})`);
 

@@ -19,10 +19,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { getArgs } from './helpers/args.js';
 import { argv } from 'process';
+import { runServer } from './main.js';
 
-const __filename = fileURLToPath(import.meta.url);
+//const __filename = fileURLToPath(import.meta.url);
 
-const __dirname = path.dirname(__filename);
+export const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export const dbPath = path.join(__dirname, '../db/db.json');
 
@@ -42,17 +43,17 @@ const parsers = [
 	parserSberbankAst,
 	parserZakupkiMos,
 	parserLOTonline,
+	parserEtpGPB,
 	parserB2BCenter,
-	parserEtpGPB
 ];
 
-export const parsersIterator = parsers[Symbol.iterator]();
+export let parsersIterator = parsers[Symbol.iterator]();
 
 export const myEmitter = new EventEmitter();
 
 myEmitter.on('next', () => {
 	const { value, done } = parsersIterator.next();
-	!done ? value() : done;
+	!done ? value() : parsersIterator = parsers[Symbol.iterator]();
 });
 
 console.log(new Date().toLocaleString());
@@ -60,4 +61,7 @@ console.log(new Date().toLocaleString());
 const args = getArgs(argv);
 if (args.cmd) {
 	parsersIterator.next().value();
+}
+if (args.server) {
+	runServer();
 }

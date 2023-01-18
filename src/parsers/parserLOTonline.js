@@ -7,15 +7,19 @@ import { bot, myEmitter, db, dbPath } from '../index.js';
 import { writeFileSync } from 'fs';
 import { isNew } from '../helpers/isNew.js';
 import { priceFilter } from '../helpers/priceFilter.js';
+import { searchParams } from '../main.js';
 
 const parserLOTonline = () => {
+
+	let delay = 0;
+
 	const args = getArgs(argv);
 
-	const minPrice = args.s ? args.s : 100_000;
+	const minPrice = args.s || searchParams?.price || 100_000;
 
-	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
+	const date = searchParams?.date || args.d || format(new Date(), 'dd.MM.yyyy');
 
-	const customer = args.c?.toLowerCase();
+	const customer = args.c?.toLowerCase() || searchParams?.client;
 
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
@@ -62,6 +66,7 @@ const parserLOTonline = () => {
 			const url = new UrlEncode(query).url;
 			const page = await browser.newPage();
 			page.setDefaultNavigationTimeout(0);
+			page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36');
 			await page.goto(url, { waitUntil: 'networkidle2' });
 			await new Promise(r => setTimeout(r, 1000));
 			// await page.setViewport({ width: 1263, height: 930 });
@@ -127,7 +132,10 @@ const parserLOTonline = () => {
 										+ `*Ссылка:* ${result.link}\n\n`
 										+ `*Документы:* ${result.documents}`;
 
-									bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
+									setTimeout(() => {
+										bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
+									}, delay);
+									delay += 1000;
 								}
 							}
 						}

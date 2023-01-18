@@ -1,12 +1,15 @@
 export const collectData = async (page, url, query, site) => {
 	if (query && site == 'b2b-center.ru') {
 		try {
-			await page.goto(url, { waitUntil: 'networkidle2' });
-			await new Promise((resolve) => setTimeout(resolve, 3000));
-			await page.waitForSelector('#f_keyword');
+			await page.goto(url, {
+				waitUntil: 'load',
+				timeout: 0
+			});
+			//await new Promise((resolve) => setTimeout(resolve, 3000));
+			await page.waitForSelector('#f_keyword', { timeout: 0 });
 			await page.keyboard.type(query);
 			await page.click('#search_button');
-			await new Promise(r => setTimeout(r, 2000));
+			await new Promise(r => setTimeout(r, 5000));
 			return await page.evaluate(() => {
 				// eslint-disable-next-line no-undef
 				return document.documentElement.outerHTML;

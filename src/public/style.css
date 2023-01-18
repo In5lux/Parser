@@ -1,0 +1,11 @@
+h1 {
+	font-size: 16px;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.item-card {
+  margin: 20px;  
+}

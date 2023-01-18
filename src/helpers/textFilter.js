@@ -50,7 +50,8 @@ export const txtFilterByStopWords = (data) => {
 		'издел',
 		'оборудован',
 		'товар',
-		'детали'
+		'детали',
+		'нефт'
 	];
 	if (typeof data == 'string') {
 		const text = data.toLowerCase();

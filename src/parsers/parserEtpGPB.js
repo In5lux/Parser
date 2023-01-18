@@ -8,17 +8,21 @@ import { writeFileSync } from 'fs';
 import { txtFilterByStopWords } from '../helpers/textFilter.js';
 import { isNew } from '../helpers/isNew.js';
 import { priceFilter } from '../helpers/priceFilter.js';
+import { searchParams } from '../main.js';
 
 const parserEtpGPB = () => {
+
+	let delay = 0;
+
 	const args = getArgs(argv);
 
-	const minPrice = args.s ? args.s : 0;
+	const minPrice = args.s || searchParams?.price || 0;
 
-	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
+	const date = searchParams?.date || args.d || format(new Date(), 'dd.MM.yyyy');
 
 	const active = args.a ? 'procedure%5Bcategory%5D=all' : 'procedure%5Bstage%5D%5B0%5D=accepting';
 
-	const customer = args.c?.toLowerCase();
+	const customer = args.c?.toLowerCase() || searchParams?.client;
 
 
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
@@ -64,6 +68,7 @@ const parserEtpGPB = () => {
 		for (const query of queries) {
 			const page = await browser.newPage();
 			page.setDefaultNavigationTimeout(0);
+			page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36');
 			// await page.waitForTimeout(3000);			
 			await page.goto(`https://etpgpb.ru/procedures/?search=${encodeURIComponent(query)}}&page=1&per=10&${active}`, { waitUntil: 'networkidle2' });
 			// await page.waitForSelector('#searchInput');
@@ -142,7 +147,10 @@ const parserEtpGPB = () => {
 											+ `*Окончание:* ${result.end}\n\n`
 											+ `*Ссылка:* ${result.link}`;
 
-										bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
+										setTimeout(() => {
+											bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
+										}, delay);
+										delay += 1000;
 									}
 								}
 							}

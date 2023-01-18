@@ -9,15 +9,21 @@ import { txtFilterByStopWords } from '../helpers/textFilter.js';
 import { isNew } from '../helpers/isNew.js';
 import { priceFilter } from '../helpers/priceFilter.js';
 import { collectData } from '../helpers/collectData.js';
+import { searchParams } from '../main.js';
 
 const parserZakupkiMos = () => {
+
+	let delay = 0;
+
 	const args = getArgs(argv);
 
-	const minPrice = args.s ? args.s : 100_000;
+	const minPrice = args.s || searchParams?.price || 100_000;
 
-	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
+	// const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
 
-	const customer = args.c?.toLowerCase();
+	const date = searchParams?.date || args.d || format(new Date(), 'dd.MM.yyyy');
+
+	const customer = args.c?.toLowerCase() || searchParams?.client;
 
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
@@ -51,7 +57,7 @@ const parserZakupkiMos = () => {
 
 		const browser = await puppeteer.launch({
 			// executablePath: revisionInfo.executablePath,
-			headless: true, // false: enables one to view the Chrome instance in action
+			// headless: true, // false: enables one to view the Chrome instance in action
 			// defaultViewport: { width: 1263, height: 930 }, // optional
 			slowMo: 25,
 			args: ['--no-sandbox', '--headless', '--disable-gpu']
@@ -62,6 +68,7 @@ const parserZakupkiMos = () => {
 		for (const query of queries) {
 			const url = new UrlEncode(query).url;
 			const page = await browser.newPage();
+			page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36');
 			page.setDefaultNavigationTimeout(0);
 			let HTML = false;
 			let attempts = 0;
@@ -134,7 +141,10 @@ const parserZakupkiMos = () => {
 											+ `*Окончание:* ${result.end}\n\n`
 											+ `*Ссылка:* ${result.link}`;
 
-										bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
+										setTimeout(() => {
+											bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
+										}, delay);
+										delay += 1000;
 									}
 								}
 							}

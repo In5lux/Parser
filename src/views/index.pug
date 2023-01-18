@@ -1,0 +1,18 @@
+html(lang="ru")
+  head
+    title title
+    link(rel='stylesheet', href='style.css', type='text/css')
+    meta(charset="utf-8")
+  body
+    div
+      each item in items
+        div.item-card
+          h1 #{item.customer}
+          p <b>Тип закупки:</b> #{item.type}
+          p <b>Описание:</b> #{item.description}
+          p <b>Цена:</b> #{item.price}
+          p <b>Дата публикации:</b> #{item.published}
+          p <b>Дата окончания:</b> #{item.end}
+          p <b>Ссылка на закупку:</b> 
+            a(href=item.link target="_blank") #{item.link}
+        hr

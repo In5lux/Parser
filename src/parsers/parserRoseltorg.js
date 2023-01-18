@@ -8,13 +8,17 @@ import { writeFileSync } from 'fs';
 import { txtFilterByStopWords } from '../helpers/textFilter.js';
 import { isNew } from '../helpers/isNew.js';
 import { priceFilter } from '../helpers/priceFilter.js';
+import { searchParams } from '../main.js';
 
 const parserRoseltorg = () => {
+
+	let delay = 0;
+
 	const args = getArgs(argv);
 
-	const minPrice = args.s ? args.s : 300_000;
+	const minPrice = args.s || searchParams?.price || 300_000;
 
-	const date = args.d ? args.d : format(new Date(), 'dd.MM.yyyy');
+	const date = searchParams?.date || args.d || format(new Date(), 'dd.MM.yyyy');
 
 	// Формат — node -s "цена контракта (число)" -d "дата публикации закупки (дд.мм.гггг)" -q "поисковый запрос (строка)"
 
@@ -69,6 +73,7 @@ const parserRoseltorg = () => {
 			const url = new UrlEncode(date, query).url;
 			const page = await browser.newPage();
 			page.setDefaultNavigationTimeout(0);
+			page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36');
 			// page.on('load', () => console.log('Loaded!', page.url()));
 			// page.on('domcontentloaded', () => console.log('dom fired'));
 			// await page.waitForTimeout(3000);
@@ -170,7 +175,10 @@ const parserRoseltorg = () => {
 											+ `*Обеспечение договора:* ${result.securing_contract}\n\n`
 											+ `*Ссылка:* ${result.link}`;
 
-										bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
+										setTimeout(() => {
+											bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
+										}, delay);
+										delay += 1000;
 									}
 								}
 							}
