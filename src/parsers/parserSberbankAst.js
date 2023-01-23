@@ -68,6 +68,10 @@ const parserSberbankAst = () => {
 
 		for (const query of queries) {
 			const page = await browser.newPage();
+			page.on('dialog', async dialog => {
+				console.log(dialog.message());
+				await dialog.accept();
+			});
 			page.setDefaultNavigationTimeout(0);
 			page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36');
 			// await page.waitForTimeout(3000);
@@ -76,6 +80,7 @@ const parserSberbankAst = () => {
 			await page.focus('#txtUnitedPurchaseSearch');
 			await new Promise(r => setTimeout(r, 1000));
 			await page.keyboard.type(query);
+			await new Promise(r => setTimeout(r, 1000));
 			await page.click('#btnUnitedPurchaseSearch');
 			await new Promise(r => setTimeout(r, 3000));
 			// await page.screenshot({ path: `page ${query}.png` });
