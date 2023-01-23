@@ -51,10 +51,10 @@ const parserB2BCenter = () => {
 
 	const parseData = async (minPrice, queries) => {
 		const browser = await puppeteer.launch({
-			headless: true, // false: enables one to view the Chrome instance in action
+			// headless: true, // false: enables one to view the Chrome instance in action
 			defaultViewport: { width: 1400, height: 700 }, // optional
 			slowMo: 25,
-			// args: ['--no-sandbox', '--headless', '--disable-gpu']
+			args: ['--no-sandbox', '--headless', '--disable-gpu']
 		});
 
 		let count = queries.length;
