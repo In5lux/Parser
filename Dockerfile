@@ -13,5 +13,7 @@ ADD *.json ./
 ADD *.cjs ./
 RUN npm install --omit=dev
 ADD . .
+RUN unlink /etc/localtime \
+	&& ln -s /usr/share/zoneinfo/Europe/Moscow /etc/localtime
 EXPOSE 3000
-CMD ["node", "./src/index.js", "-cmd"]
+CMD ["node", "./src/index.js", "-server"]
