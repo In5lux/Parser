@@ -1,7 +1,8 @@
 html(lang="ru")
   head
     title title
-    link(rel='stylesheet', href='style.css', type='text/css')
+    link(rel="stylesheet", href="style.css", type="text/css")
+    script(type="text/javascript" src="scripts.js" async)
     meta(charset="utf-8")
   body
     div
@@ -13,6 +14,14 @@ html(lang="ru")
           p <b>Цена:</b> #{item.price}
           p <b>Дата публикации:</b> #{item.published}
           p <b>Дата окончания:</b> #{item.end}
-          p <b>Ссылка на закупку:</b> 
-            a(href=item.link target="_blank") #{item.link}
+          if item.securing_requisition
+            p <b>Обеспечение заявки:</b> #{item.securing_requisition}
+          if item.securing_contract
+            p <b>Обеспечение договора:</b> #{item.securing_contract}
+          p 
+            a(href=item.link target="_blank")
+              <b>Подробнее</b>...  
+            if item.documents
+              a(href=item.documents target="_blank")
+                <b>Документы</b>...
         hr
