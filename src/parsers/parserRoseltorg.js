@@ -108,8 +108,8 @@ const parserRoseltorg = () => {
 					date[2] = '20' + date[2];
 					date = date.join('.');
 					itemInfo.publishDate = date;
-					itemInfo.securing_requisition = $item('main>section.lots-list>div>div>div.lot-item__data> div.lot-item__infoblock.lot-item__request>span').text();
-					itemInfo.securing_contract = $item('main>section.lots-list>div>div>div.lot-item__data>div.lot-item__infoblock.lot-item__contact>span.lot-item__summ').text();
+					itemInfo.securing_requisition = $item('main>section.lots-list>div>div>div.lot-item__data> div.lot-item__infoblock.lot-item__request>span.lot-item__summ').text() + ' руб.' + $item('main>section.lots-list>div>div>div.lot-item__data> div.lot-item__infoblock.lot-item__request>span.lot-item__procent-qty').text();
+					itemInfo.securing_contract = $item('main>section.lots-list>div>div>div.lot-item__data>div.lot-item__infoblock.lot-item__contact>span.lot-item__summ').text() || $item('main>section.lots-list>div>div>div.lot-item__data>div.lot-item__infoblock.lot-item__contact>span.lot-item__procent-qty').text();
 					itemsInfo.push(itemInfo);
 				}
 
