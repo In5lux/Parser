@@ -145,8 +145,6 @@ const parserB2BCenter = () => {
 				console.log(`B2B Center — Нет доступных результатов по ключевому запросу "${query} (${count})"\n`);
 			}
 
-			// console.log(`B2B Center — ${query} (${count})`);
-
 			if (data.length > 0) {
 				console.log(data);
 			} else {

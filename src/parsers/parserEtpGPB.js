@@ -118,8 +118,6 @@ const parserEtpGPB = () => {
 						if (result.published == 'Сегодня') result.published = date;
 						if (result.published == 'Вчера') result.published = format(subDays(new Date(), 1), 'dd.MM.yyyy');
 
-						format(subDays(new Date(), 1), 'dd.MM.yyyy');
-
 						//if (result.price.includes('Цена не указана')) result.price = 0;
 
 						if (

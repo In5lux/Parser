@@ -146,7 +146,10 @@ const parserZakazRF = () => {
 		const url = new UrlEncode(query).url;
 
 		axios
-			.get(url)
+			.get(url, {
+				timeout: 15_000,
+				headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36' }
+			})
 			.then((res) => {
 				parseData(res.data, minPrice, query);
 			})

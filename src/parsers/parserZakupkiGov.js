@@ -12,28 +12,12 @@ import { searchParams } from '../main.js';
 
 const parserZakupkiGov = () => {
 
+	const _axios = axios.create({
+		timeout: 15_000,
+		headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36' }
+	});
+
 	let delay = 0;
-
-	// const keepAliveAgent = new agentkeepalive.HttpAgent({
-	// 	maxSockets: 160,
-	// 	maxFreeSockets: 160,
-	// 	timeout: 60000,
-	// 	freeSocketTimeout: 30000,
-	// 	keepAliveMsecs: 60000
-	// });
-
-	// const httpsKeepAliveAgent = new agentkeepalive.HttpsAgent({
-	// 	maxSockets: 160,
-	// 	maxFreeSockets: 160,
-	// 	timeout: 60000,
-	// 	freeSocketTimeout: 30000,
-	// 	keepAliveMsecs: 60000
-	// });
-
-	// const axiosInstance = axios.create({
-	// 	httpAgent: keepAliveAgent,
-	// 	httpsAgent: httpsKeepAliveAgent
-	// });
 
 	const args = getArgs(argv);
 
@@ -191,7 +175,7 @@ const parserZakupkiGov = () => {
 	const getData = (query) => {
 		const url = new UrlEncode(query).url;
 
-		axios
+		_axios
 			.get(url)
 			.then((res) => {
 				const count = countQueries;
@@ -205,7 +189,7 @@ const parserZakupkiGov = () => {
 					for (let i = 1; i <= pages; i++) {
 						const newUrl = url.replace(/pageNumber=\d/, `pageNumber=${i}`);
 						// console.log(`НОВАЯ ССЫЛКА  ${newUrl}`);
-						axios.get(newUrl).then((res) => {
+						_axios.get(newUrl).then((res) => {
 							console.log(
 								`\nZakupki Gov — Количество страниц по запросу "${query}" (${count}) — ${pages}` +
 								`\nСтраница ${i} по запросу ${query}`
