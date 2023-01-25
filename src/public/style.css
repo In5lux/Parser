@@ -1,7 +1,11 @@
-body, div, h1, h2, h3, h4{
+body, div, h1, h2, h3, h4, form, header, hr{
   margin: 0;
   padding: 0;
 }
+body {
+  position: relative;  
+}
+
 h1 {
 	font-size: 18px;
 }
@@ -17,11 +21,54 @@ table {
 }
 
 .item-card:hover {
-  background-color: rgb(237, 255, 225);
+  background-color: linen;
   box-shadow: 0px 0px 5px 5px rgba(0, 0, 0, 0.2);
 }
 
 a {
   text-decoration: none;
   font-style: italic;
+}
+
+input, button {
+  font-size: 14px;
+  color: black;
+  margin: 10px;  
+}
+
+header {
+  background: linear-gradient(0deg, rgba(0,212,255,1) 0%, rgba(9,115,121,1) 50%, rgba(0,212,255,1) 100%);
+  box-shadow: 0px 0px 20px darkslategray;
+  position: fixed;
+  width: 100%;
+  top:0;    
+}
+
+main {
+  margin-top: 60px;
+}
+
+.msg {
+  color: #fff;  
+}
+
+.search-msg {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 20px;
+}
+
+button:hover {
+  color: black;
+  background-color: cyan;
+}
+
+form {
+  padding-right: auto;  
+}
+
+#app {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

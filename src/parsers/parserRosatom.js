@@ -57,7 +57,7 @@ const parserRosatom = () => {
 
 	console.log('\nRosatom: результаты поиска\n');
 
-	const parseData = (html, minPrice, query) => {
+	const parseData = async (html, minPrice, query) => {
 		let data = [];
 		const $ = cheerio.load(html);
 

@@ -143,7 +143,7 @@ const parserB2BCenter = () => {
 				});
 			} else {
 				console.log(`B2B Center — Нет доступных результатов по ключевому запросу "${query} (${count})"\n`);
-			}
+			}			
 
 			if (data.length > 0) {
 				console.log(data);

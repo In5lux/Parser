@@ -1,27 +1,43 @@
 html(lang="ru")
   head
     title title
-    link(rel="stylesheet", href="style.css", type="text/css")
-    script(type="text/javascript" src="scripts.js" async)
+    link(rel="stylesheet", href="style.css", type="text/css")    
+    script(src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js")    
+    script(type="text/javascript" src="scripts.js" defer)
     meta(charset="utf-8")
   body
-    div
-      each item in items
-        div.item-card
-          h1 #{item.customer}
-          p <b>Тип закупки:</b> #{item.type}
-          p <b>Описание:</b> #{item.description}
-          p <b>Цена:</b> #{item.price}
-          p <b>Дата публикации:</b> #{item.published}
-          p <b>Дата окончания:</b> #{item.end}
-          if item.securing_requisition
-            p <b>Обеспечение заявки:</b> #{item.securing_requisition}
-          if item.securing_contract
-            p <b>Обеспечение договора:</b> #{item.securing_contract}
-          p 
-            a(href=item.link target="_blank")
-              <b>Подробнее</b>...  
-            if item.documents
-              a(href=item.documents target="_blank")
-                <b>Документы</b>...
-        hr
+    header
+      div#app
+        form
+          input(type="date" v-bind:value="date" v-on:change="dateChange")
+          input(v-model="customer" type="text" placeholder="Поиск по поставщику")
+          input(v-model="desc" type="text" placeholder="Поиск в описании закупки")
+          button#search(v-on:click="search") Искать
+          button#parse(v-on:click="parse") Обновить          
+          //- p Заказчик: {{ customer }}
+          //- p Описание: {{ desc }}
+          span.msg Последнее обновление: {{ lastUpdateTime }} {{ status }}            
+    main
+      if message
+      p.search-msg #{message}
+      if items
+        each item in items     
+            
+          div.item-card
+            h1 #{item.customer}
+            p <b>Тип закупки:</b> #{item.type}
+            p <b>Описание:</b> #{item.description}
+            p <b>Цена:</b> #{item.price}
+            p <b>Дата публикации:</b> #{item.published}
+            p <b>Дата окончания:</b> #{item.end}
+            if item.securing_requisition
+              p <b>Обеспечение заявки:</b> #{item.securing_requisition}
+            if item.securing_contract
+              p <b>Обеспечение договора:</b> #{item.securing_contract}
+            p 
+              a(href=item.link target="_blank")
+                <b>Подробнее</b>...  
+              if item.documents
+                a(href=item.documents target="_blank")
+                  <b>Документы</b>...
+          hr 

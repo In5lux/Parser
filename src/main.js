@@ -35,7 +35,12 @@ export const runServer = () => {
 			data = data.filter(item => item.published.toLowerCase().indexOf(searchParams.date.toLowerCase()) != -1);
 		}
 
-		Object.keys(searchParams).length != 0 ? res.render('index', { items: data }) : res.send('Не выбраны параметры поиска');
+		Object.keys(searchParams).length != 0 && data.length != 0 ?
+			res.render('index', { items: data })
+			: data.length == 0 ?
+				res.render('index', { message: 'Ничего не найдено' })
+				: res.render('index', { message: 'Не выбраны параметры поиска' });
+
 	});
 
 	app.listen(port, () => {
