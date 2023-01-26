@@ -19,7 +19,7 @@ export const runServer = () => {
 	app.get('/parse', (req, res) => {
 		searchParams = req.query;
 		myEmitter.emit('next');
-		res.send('Start parsing');
+		res.send('Парсинг');
 	});
 
 	app.get('/db', (req, res) => {
@@ -36,7 +36,7 @@ export const runServer = () => {
 		}
 
 		Object.keys(searchParams).length != 0 && data.length != 0 ?
-			res.render('index', { items: data })
+			res.render('index', { items: data.reverse() })
 			: data.length == 0 ?
 				res.render('index', { message: 'Ничего не найдено' })
 				: res.render('index', { message: 'Не выбраны параметры поиска' });

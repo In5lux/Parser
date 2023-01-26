@@ -1,14 +1,17 @@
 html(lang="ru")
   head
-    title title
+    title Поиск закупочных процедур
     link(rel="stylesheet", href="style.css", type="text/css")    
+    link(rel="preconnect" href="https://fonts.googleapis.com")
+    link(rel="preconnect" href="https://fonts.gstatic.com" crossorigin)
+    link(href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet")
     script(src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js")    
     script(type="text/javascript" src="scripts.js" defer)
     meta(charset="utf-8")
   body
     header
       div#app
-        form
+        form(v-bind:class="{ error: isError }")
           input(type="date" v-bind:value="date" v-on:change="dateChange")
           input(v-model="customer" type="text" placeholder="Поиск по поставщику")
           input(v-model="desc" type="text" placeholder="Поиск в описании закупки")
@@ -16,18 +19,21 @@ html(lang="ru")
           button#parse(v-on:click="parse") Обновить          
           //- p Заказчик: {{ customer }}
           //- p Описание: {{ desc }}
-          span.msg Последнее обновление: {{ lastUpdateTime }} {{ status }}            
+          span.msg(v-if="isError == true") Ошибка обновления: {{ status }}
+          span.msg(v-if="isError == false") Последнее обновление: {{ lastUpdateTime }} {{ status }}
     main
       if message
-      p.search-msg #{message}
-      if items
-        each item in items     
-            
+        p.search-msg #{message}
+      if items       
+        each item in items            
           div.item-card
             h1 #{item.customer}
-            p <b>Тип закупки:</b> #{item.type}
+            p #{item.number}
+            if item.type
+              p <b>Тип закупки:</b> #{item.type}
             p <b>Описание:</b> #{item.description}
-            p <b>Цена:</b> #{item.price}
+            if item.price
+              p <b>Цена:</b> #{item.price}
             p <b>Дата публикации:</b> #{item.published}
             p <b>Дата окончания:</b> #{item.end}
             if item.securing_requisition

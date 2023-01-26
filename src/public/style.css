@@ -4,10 +4,11 @@ body, div, h1, h2, h3, h4, form, header, hr{
 }
 body {
   position: relative;  
+  font-family: 'Open Sans', sans-serif;
 }
 
 h1 {
-	font-size: 18px;
+	font-size: 16px;
 }
 table {
   border-collapse: collapse;
@@ -36,6 +37,10 @@ input, button {
   margin: 10px;  
 }
 
+input:focus {
+  background-color: linen;  
+}
+
 header {
   background: linear-gradient(0deg, rgba(0,212,255,1) 0%, rgba(9,115,121,1) 50%, rgba(0,212,255,1) 100%);
   box-shadow: 0px 0px 20px darkslategray;
@@ -52,6 +57,11 @@ main {
   color: #fff;  
 }
 
+.error {
+  background: linear-gradient(0deg, rgb(255, 145, 0) 0%, rgb(255, 0, 0) 50%, rgb(255, 245, 100) 100%);
+  color: #fff;    
+}
+
 .search-msg {
   margin-top: 20px;
   text-align: center;
@@ -64,11 +74,18 @@ button:hover {
 }
 
 form {
-  padding-right: auto;  
-}
-
-#app {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+hr {
+  border: none;  
+ 	width: 98%;
+	height: 50px;
+	margin-top: 0;
+	/*border-bottom: 1px solid #1f1209;*/  
+	box-shadow: 0 20px 20px -20px darkslategray;
+  margin: -70px auto 10px; 
 }
