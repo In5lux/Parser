@@ -2,6 +2,8 @@ import express from 'express';
 import path from 'path';
 import { myEmitter, dbPath, __dirname } from './index.js';
 import { readFileSync } from 'fs';
+import { Server } from 'socket.io';
+import http from 'http';
 
 export let searchParams;
 
@@ -15,6 +17,19 @@ export const runServer = () => {
 	app.set('view engine', 'pug');
 
 	const port = 3000;
+
+	const server = http.createServer(app);
+	const io = new Server(server);
+
+	io.sockets.on('connection', (socket) => {
+		//console.log('Socket connection');
+		socket.on('send mess', function (_data) {
+			io.sockets.emit('add mess', 'Обновление');
+			myEmitter.on('done', () => {
+				io.sockets.emit('add mess', 'Выполнено');
+			});
+		});
+	});
 
 	app.get('/parse', (req, res) => {
 		searchParams = req.query;
@@ -43,7 +58,7 @@ export const runServer = () => {
 
 	});
 
-	app.listen(port, () => {
+	server.listen(port, () => {
 		console.log(`Server listening on port ${port}`);
 	});
 };

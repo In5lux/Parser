@@ -5,6 +5,9 @@
 const host = 'http://localhost';
 const port = 3333;
 
+var socket = io.connect();
+
+socket.on('add mess', function (data) { })
 
 var app = new Vue({
 	el: '#app',
@@ -20,11 +23,15 @@ var app = new Vue({
 		parse: function () {
 			if (event) {
 				event.preventDefault()
-			}
-			fetch(host + ':' + port + '/parse').then(async res => {
-				const response = await res.text();
+			};
+			socket.emit('send mess', 'Start parsing');
+			socket.on('add mess', function (data) {
+				app.status = data;
+			});
+			fetch(host + ':' + port + '/parse').then(async _res => {
+				//const response = await res.text();
 				this.isError = false;
-				this.status = response;
+				//this.status = response;
 				this.lastUpdateTime = new Date().toLocaleString();
 				localStorage.setItem('lastUpdateTime', this.lastUpdateTime);
 				//console.log(this.lastUpdateTime + ' ' + this.status);

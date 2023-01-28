@@ -53,7 +53,12 @@ export const myEmitter = new EventEmitter();
 
 myEmitter.on('next', () => {
 	const { value, done } = parsersIterator.next();
-	!done ? value() : parsersIterator = parsers[Symbol.iterator]();
+	if (!done) {
+		value();
+	} else {
+		myEmitter.emit('done');
+		parsersIterator = parsers[Symbol.iterator]();
+	}
 });
 
 console.log(new Date().toLocaleString());
