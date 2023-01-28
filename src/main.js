@@ -9,6 +9,8 @@ export let searchParams;
 
 export const runServer = () => {
 
+	let isRunning = false;
+
 	const viewPath = path.join(__dirname, 'views');
 
 	const app = express();
@@ -19,22 +21,40 @@ export const runServer = () => {
 	const port = 3000;
 
 	const server = http.createServer(app);
-	const io = new Server(server);
+	const io = new Server(server);	
 
-	io.sockets.on('connection', (socket) => {
-		//console.log('Socket connection');
-		socket.on('send mess', function (_data) {
-			io.sockets.emit('add mess', 'Обновление');
-			myEmitter.on('done', () => {
-				io.sockets.emit('add mess', 'Выполнено');
+	//const connections = [];
+
+	io.on('connection', function (socket) {
+		console.log('Socket connection');
+		console.log(socket.id);			
+		socket.join('room');		
+		//socket.emit('add mess', parsingStatus);
+		//console.log(socket.handshake);
+		//connections.push(socket);		
+		console.log(socket.rooms);
+		socket.on('send mess', async (data) => {			
+			//console.log(data);
+			io.to('room').emit('add mess', 'Парсинг');
+			myEmitter.on('done', () => {				
+				io.to('room').emit('add mess', 'Выполнено');
+				isRunning = false;
 			});
+		});
+		socket.on('disconnect', function (_data) {
+			// Удаления пользователя из массива
+			//connections.splice(connections.indexOf(socket), 1);
+			console.log('Пользователь отключился');
 		});
 	});
 
-	app.get('/parse', (req, res) => {
+	app.get('/parse', (req, _res) => {
 		searchParams = req.query;
-		myEmitter.emit('next');
-		res.send('Парсинг');
+		if (isRunning == false) {
+			isRunning = true;
+			myEmitter.emit('next');
+		}
+		//res.send('Парсинг');
 	});
 
 	app.get('/db', (req, res) => {

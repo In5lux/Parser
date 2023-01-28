@@ -85,7 +85,7 @@ form {
   align-items: center;
   justify-content: start;
   flex-wrap: wrap;
-  margin-left: 15px;      
+  padding-left: 15px;      
 }
 
 hr {

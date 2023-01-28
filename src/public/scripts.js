@@ -24,13 +24,15 @@ var app = new Vue({
 			if (event) {
 				event.preventDefault()
 			};
+			this.isError = false;
 			socket.emit('send mess', 'Start parsing');
-			socket.on('add mess', function (data) {
-				app.status = data;
+			socket.on('add mess', async function (data) {
+				console.log(data);
+				const d = await data;
+				app.status = d;
 			});
 			fetch(host + ':' + port + '/parse').then(async _res => {
 				//const response = await res.text();
-				this.isError = false;
 				//this.status = response;
 				this.lastUpdateTime = new Date().toLocaleString();
 				localStorage.setItem('lastUpdateTime', this.lastUpdateTime);
