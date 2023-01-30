@@ -21,22 +21,21 @@ export const runServer = () => {
 	const port = 3000;
 
 	const server = http.createServer(app);
-	const io = new Server(server);	
+	const io = new Server(server);
 
-	//const connections = [];
+	//const connections = [];	
 
 	io.on('connection', function (socket) {
-		console.log('Socket connection');
-		console.log(socket.id);			
-		socket.join('room');		
+		console.log(`Пользователь ${socket.id} подключен`);
+		socket.join('room');
 		//socket.emit('add mess', parsingStatus);
 		//console.log(socket.handshake);
 		//connections.push(socket);		
-		console.log(socket.rooms);
-		socket.on('send mess', async (data) => {			
+		//console.log(socket.rooms);
+		socket.on('send mess', async (_data) => {
 			//console.log(data);
 			io.to('room').emit('add mess', 'Парсинг');
-			myEmitter.on('done', () => {				
+			myEmitter.on('done', () => {
 				io.to('room').emit('add mess', 'Выполнено');
 				isRunning = false;
 			});
@@ -44,17 +43,17 @@ export const runServer = () => {
 		socket.on('disconnect', function (_data) {
 			// Удаления пользователя из массива
 			//connections.splice(connections.indexOf(socket), 1);
-			console.log('Пользователь отключился');
+			console.log(`Пользователь ${socket.id} отключился`);
 		});
 	});
 
-	app.get('/parse', (req, _res) => {
+	app.get('/parse', (req, res) => {
 		searchParams = req.query;
 		if (isRunning == false) {
 			isRunning = true;
 			myEmitter.emit('next');
 		}
-		//res.send('Парсинг');
+		res.send('Парсинг');
 	});
 
 	app.get('/db', (req, res) => {
