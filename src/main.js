@@ -1,11 +1,15 @@
 import express from 'express';
 import path from 'path';
-import { myEmitter, dbPath, __dirname } from './index.js';
-import { readFileSync } from 'fs';
+import { myEmitter, dbPath, stopWordsPath, __dirname } from './index.js';
+import { readFileSync, writeFileSync } from 'fs';
 import { Server } from 'socket.io';
 import http from 'http';
+import bodyParser from 'body-parser';
+import { txtFilterByStopWords } from './helpers/textFilter.js';
 
 export let searchParams;
+
+console.log();
 
 export const runServer = () => {
 
@@ -18,6 +22,11 @@ export const runServer = () => {
 	app.set('views', viewPath);
 	app.set('view engine', 'pug');
 
+	app.use(bodyParser.json());
+	app.use(bodyParser.urlencoded({ extended: true }));
+	//app.use(bodyParser.json({ type: 'application/json' }));
+
+
 	const port = 3000;
 
 	const server = http.createServer(app);
@@ -28,7 +37,6 @@ export const runServer = () => {
 	io.on('connection', function (socket) {
 		console.log(`Пользователь ${socket.id} подключен`);
 		socket.join('room');
-		//socket.emit('add mess', parsingStatus);
 		//console.log(socket.handshake);
 		//connections.push(socket);		
 		//console.log(socket.rooms);
@@ -59,6 +67,7 @@ export const runServer = () => {
 	app.get('/db', (req, res) => {
 		let data = JSON.parse(readFileSync(dbPath, 'utf-8'));
 		searchParams = req.query;
+		data = data.filter(item => txtFilterByStopWords(item.description));
 		if (searchParams.client) {
 			data = data.filter(item => item.customer.toLowerCase().indexOf(searchParams.client.toLowerCase()) != -1);
 		}
@@ -74,7 +83,15 @@ export const runServer = () => {
 			: data.length == 0 ?
 				res.render('index', { message: 'Ничего не найдено' })
 				: res.render('index', { message: 'Не выбраны параметры поиска' });
+	});
 
+	app.post('/stopwords', (req, res) => {
+		const stopWord = req.body[0].toLowerCase();
+		console.log(stopWord);
+		const stopWords = JSON.parse(readFileSync(stopWordsPath, 'utf-8'));
+		stopWords.push(stopWord);
+		writeFileSync(stopWordsPath, JSON.stringify(stopWords));
+		res.send(JSON.stringify(`Стоп-слово '${stopWord}' добавлено в базу`));
 	});
 
 	server.listen(port, () => {

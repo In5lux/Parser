@@ -10,41 +10,44 @@ html(lang="ru")
     script(type="text/javascript" src="socket.io.min.js")
     meta(charset="utf-8")
   body
-    header
-      div#app
-        form(v-bind:class="{ error: isError }")
-          input(type="date" v-bind:value="date" v-on:change="dateChange")
-          input(v-model="customer" type="text" placeholder="Поиск по поставщику")
-          input(v-model="desc" type="text" placeholder="Поиск в описании")
-          button#search(v-on:click="search") Искать
-          button#parse(v-on:click="parse") Обновить          
-          //- p Заказчик: {{ customer }}
-          //- p Описание: {{ desc }}
-          span.msg(v-if="isError == true") Ошибка обновления: {{ status }}
-          span.msg(v-if="isError == false") Последнее обновление: {{ lastUpdateTime }} {{ status }}
-    main
-      if message
-        p.search-msg #{message}
-      if items       
-        each item in items            
-          div.item-card
-            h1 #{item.customer}
-            p #{item.number}
-            if item.type
-              p <b>Тип закупки:</b> #{item.type}
-            p <b>Описание:</b> #{item.description}
-            if item.price
-              p <b>Цена:</b> #{item.price}
-            p <b>Дата публикации:</b> #{item.published}
-            p <b>Дата окончания:</b> #{item.end}
-            if item.securing_requisition
-              p <b>Обеспечение заявки:</b> #{item.securing_requisition}
-            if item.securing_contract
-              p <b>Обеспечение договора:</b> #{item.securing_contract}
-            p 
-              a(href=item.link target="_blank")
-                <b>Подробнее</b>...  
-              if item.documents
-                a(href=item.documents target="_blank")
-                  <b>Документы</b>...
-          hr 
+    div#app
+      header              
+          form(v-bind:class="{ error: isError }")
+            input(type="date" v-bind:value="date" v-on:change="dateChange")
+            input(v-model="customer" type="text" placeholder="Поиск по поставщику")
+            input(v-model="desc" type="text" placeholder="Поиск в описании")
+            button#search(v-on:click="search") Искать
+            button#parse(v-on:click="parse") Обновить          
+            //- p Заказчик: {{ customer }}
+            //- p Описание: {{ desc }}
+            span.msg(v-if="isError == true") Ошибка обновления: {{ status }}
+            span.msg(v-if="isError == false") Последнее обновление: {{ lastUpdateTime }} {{ status }}
+            button.stop-word(v-on:click="addStopWord") 
+              img(src="img/stop.svg" width="20" height="20" title="Добавление стоп-слова в базу") 
+              
+      main
+        if message
+          p.search-msg #{message}
+        if items       
+          each item in items            
+            div.item-card
+              h1 #{item.customer}
+              p #{item.number}
+              if item.type
+                p <b>Тип закупки:</b> #{item.type}
+              p <b>Описание:</b> #{item.description}
+              if item.price
+                p <b>Цена:</b> #{item.price}
+              p <b>Дата публикации:</b> #{item.published}
+              p <b>Дата окончания:</b> #{item.end}
+              if item.securing_requisition
+                p <b>Обеспечение заявки:</b> #{item.securing_requisition}
+              if item.securing_contract
+                p <b>Обеспечение договора:</b> #{item.securing_contract}
+              p 
+                a(href=item.link target="_blank")
+                  <b>Подробнее</b>...  
+                if item.documents
+                  a(href=item.documents target="_blank")
+                    <b>Документы</b>...              
+            hr

@@ -72,6 +72,29 @@ var app = new Vue({
 			this.searchDate = date;
 			localStorage.setItem('searchDate', date);
 			window.open(host + ':' + port + `/db?date=${date}`, "_self");
-		}
+		},
+		addStopWord: async function () {
+			if (event) {
+				event.preventDefault()
+			}
+			const stopWords = getSelection().toString();
+			console.log(stopWords);
+			if (stopWords.length != 0) {
+				let response = await fetch('/stopwords', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify([stopWords])
+				});
+
+				let result = await response.text();
+				alert(result);
+				location.reload();
+			} else {
+				alert('Не выделено слово для добавления в список стоп-слов');
+			}
+		},
 	}
-})
+});
+
