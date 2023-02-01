@@ -9,8 +9,6 @@ import { txtFilterByStopWords } from './helpers/textFilter.js';
 
 export let searchParams;
 
-console.log();
-
 export const runServer = () => {
 
 	let isRunning = false;
@@ -64,34 +62,64 @@ export const runServer = () => {
 		res.send('Парсинг');
 	});
 
-	app.get('/db', (req, res) => {
-		let data = JSON.parse(readFileSync(dbPath, 'utf-8'));
-		searchParams = req.query;
-		data = data.filter(item => txtFilterByStopWords(item.description));
-		if (searchParams.client) {
-			data = data.filter(item => item.customer.toLowerCase().indexOf(searchParams.client.toLowerCase()) != -1);
-		}
-		if (searchParams.desc) {
-			data = data.filter(item => item.description.toLowerCase().indexOf(searchParams.desc.toLowerCase()) != -1);
-		}
-		if (searchParams.date) {
-			data = data.filter(item => item.published.toLowerCase().indexOf(searchParams.date.toLowerCase()) != -1);
-		}
+	app.get('/', (req, res) => {
+		res.render('index', { message: 'Необходимо выбрать параметры поиска' });
+	});
 
-		Object.keys(searchParams).length != 0 && data.length != 0 ?
-			res.render('index', { items: data.reverse() })
-			: data.length == 0 ?
-				res.render('index', { message: 'Ничего не найдено' })
-				: res.render('index', { message: 'Не выбраны параметры поиска' });
+
+	app.get('/search', (req, res) => {
+		searchParams = req.query;
+
+		if (Object.keys(searchParams).length == 0) {
+			res.json({ message: 'Не выбраны параметры поиска' });
+		} else {
+			let data = JSON.parse(readFileSync(dbPath, 'utf-8'));
+
+			data = data.filter(item => txtFilterByStopWords(item.description));
+
+			if (searchParams.desc) {
+				data = data.filter(item => item.description.toLowerCase().indexOf(searchParams.desc.toLowerCase()) != -1);
+			} else if (searchParams.client) {
+				data = data.filter(item => item.customer.toLowerCase().indexOf(searchParams.client.toLowerCase()) != -1);
+			} else {
+				data = data.filter(item => item.published && searchParams.date ? item.published.toLowerCase().indexOf(searchParams.date.toLowerCase()) != -1 : item);
+			}
+
+			data.length != 0 ? res.json({ items: data.reverse() }) : res.json({ message: 'Ничего не найдено' });
+		}
+	});
+
+	app.get('/db', (req, res) => {
+		searchParams = req.query;
+		if (Object.keys(searchParams).length == 0) {
+			res.render('index', { message: 'Не выбраны параметры поиска' });
+		} else {
+			let data = JSON.parse(readFileSync(dbPath, 'utf-8'));
+
+			data = data.filter(item => txtFilterByStopWords(item.description));
+
+			if (searchParams.client) {
+				data = data.filter(item => item.customer.toLowerCase().indexOf(searchParams.client.toLowerCase()) != -1);
+			}
+			if (searchParams.desc) {
+				data = data.filter(item => item.description.toLowerCase().indexOf(searchParams.desc.toLowerCase()) != -1);
+			}
+			if (searchParams.date) {
+				data = data.filter(item => item.published.toLowerCase().indexOf(searchParams.date.toLowerCase()) != -1);
+			}
+
+			data.length != 0 ? res.render('index', { items: data.reverse() }) : res.render('index', { message: 'Ничего не найдено' });
+		}
 	});
 
 	app.post('/stopwords', (req, res) => {
 		const stopWord = req.body[0].toLowerCase();
-		console.log(stopWord);
+		const msg = `Стоп-слово '${stopWord}' добавлено в базу`;
+		console.log(msg);
 		const stopWords = JSON.parse(readFileSync(stopWordsPath, 'utf-8'));
 		stopWords.push(stopWord);
 		writeFileSync(stopWordsPath, JSON.stringify(stopWords));
-		res.send(JSON.stringify(`Стоп-слово '${stopWord}' добавлено в базу`));
+		res.send(JSON.stringify(msg));
 	});
 
 	server.listen(port, () => {

@@ -20,12 +20,31 @@ html(lang="ru")
             button#parse(v-on:click="parse") Обновить          
             //- p Заказчик: {{ customer }}
             //- p Описание: {{ desc }}
-            span.msg(v-if="isError == true") Ошибка обновления: {{ status }}
+            span.msg(v-if="isError == true") Ошибка: {{ status }}
             span.msg(v-if="isError == false") Последнее обновление: {{ lastUpdateTime }} {{ status }}
             button.stop-word(v-on:click="addStopWord") 
               img(src="img/stop.svg" width="20" height="20" title="Добавление стоп-слова в базу") 
               
       main
+        p.search-msg(v-if="message") {{ message }}
+        div(v-for="item in items" :key="item.number")
+          div.item-card
+            h1 {{ item.customer }}
+            p {{ item.number }}
+            p <b>Тип закупки:</b> {{ item.type }}
+            p <b>Описание:</b> {{ item.description }}
+            p <b>Цена:</b> {{ item.price }}
+            p <b>Дата публикации:</b> {{ item.published }}
+            p <b>Дата окончания:</b> {{ item.end }}
+            p(v-if="item.securing_requisition") <b>Обеспечение заявки:</b> {{ item.securing_requisition }}
+            p(v-if="item.securing_contract") <b>Обеспечение договора:</b> {{ item.securing_contract }}
+            p 
+              a(v-bind:href="item.link" target="_blank")
+                <b>Подробнее</b>...  
+              a(v-if="item.documents" v-bind:href="item.documents" target="_blank")
+                <b>Документы</b>...              
+          hr
+
         if message
           p.search-msg #{message}
         if items       

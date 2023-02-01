@@ -1,6 +1,4 @@
-// const date = d => `${d.getFullYear()}-${d.getMonth().toString().length == 1 ? ('0' + (d.getMonth() + 1)) : d.getMonth()}-${d.getDate()}`;
-
-//console.log(date(new Date()));
+const dateFormat = d => `${d.getFullYear()}-${d.getMonth().toString().length == 1 ? ('0' + (d.getMonth() + 1)) : d.getMonth()}-${d.getDate().toString().length == 1 ? ('0' + (d.getDate())) : d.getDate()}`;
 
 const host = 'http://localhost';
 const port = 3333;
@@ -12,14 +10,16 @@ socket.on('add mess', function (data) { })
 var app = new Vue({
 	el: '#app',
 	data: {
-		date: localStorage.getItem('date') || null,
-		searchDate: localStorage.getItem('searchDate') || null,
+		date: dateFormat(new Date()) || null,
+		searchDate: dateFormat(new Date()).split('-').reverse().join('.') || null,
 		customer: null,
 		price: null,
 		desc: null,
 		lastUpdateTime: localStorage.getItem('lastUpdateTime') || null,
 		status: null,
 		isError: false,
+		items: null,
+		message: null
 	},
 	methods: {
 		parse: function () {
@@ -32,7 +32,7 @@ var app = new Vue({
 				console.log(data);
 				const d = await data;
 				app.status = d;
-			});
+			});			
 			const searchParams = {
 				date: this.searchDate
 			}
@@ -50,33 +50,96 @@ var app = new Vue({
 					console.error(this.lastUpdateTime + ' ' + this.status + ' ' + error.message);
 				});
 		},
-		search: function () {
+		search: async function () {
 			this.isError = false;
+			console.log(this.date);
 			if (event) {
 				event.preventDefault()
 			}
-			if (this.desc) {
-				window.open(host + ':' + port + `/db?desc=${this.desc}`, "_self");
-				localStorage.removeItem('date');
-			};
-			if (this.customer) {
-				window.open(host + ':' + port + `/db?client=${this.customer}`, "_self");
-				localStorage.removeItem('date');
-			};
+			const searchParams = {};
+
+			document.querySelector('.search-msg').classList.add('hide');
+
+			if (this.desc) { searchParams.desc = this.desc }
+			else if (this.customer) { searchParams.client = this.customer }
+			else { searchParams.date = this.date.split('-').reverse().join('.') }
+
+			fetch(host + ':' + port + '/search?' + new URLSearchParams(searchParams).toString(), {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			}).then(async res => {
+				let result = JSON.parse(await res.text());
+				if (result.items) {
+					this.items = result.items
+					this.message = null;
+				};
+				if (result.message) {
+					this.items = null;
+					this.message = result.message;
+				};
+			}).catch(error => {
+				this.isError = true;
+				this.status = 'Нет ответа сервера';
+				console.error(this.lastUpdateTime + ' ' + this.status + ' ' + error.message);
+			});
+
+			// if (this.desc) {
+			// 	window.open(host + ':' + port + `/db?desc=${this.desc}`, "_self");
+			// 	localStorage.removeItem('date');
+			// };
+			// if (this.customer) {
+			// 	window.open(host + ':' + port + `/db?client=${this.customer}`, "_self");
+			// 	localStorage.removeItem('date');
+			// };
 		},
 		dateChange: function handler() {
 			this.isError = false;
+			this.desc = null;
+			this.customer = null;
+			document.querySelector('.search-msg').classList.add('hide');
 			const value = event.target.value;
+			this.date = value;
 			localStorage.setItem('date', value);
 			const date = event.target.value.split('-').reverse().join('.');
 			this.searchDate = date;
 			localStorage.setItem('searchDate', date);
-			window.open(host + ':' + port + `/db?date=${date}`, "_self");
+			// window.open(host + ':' + port + `/db?date=${date}`, "_self");
+
+			fetch(`${host}:${port}/search?date=${date}`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			}).then(async res => {
+				let result = JSON.parse(await res.text());
+				if (result.items) {
+					this.items = result.items
+					this.message = null;
+				};
+				if (result.message) {
+					this.items = null;
+					this.message = result.message;
+				};
+			}).catch(error => {
+				this.isError = true;
+				this.status = 'Нет ответа сервера';
+				console.error(this.lastUpdateTime + ' ' + this.status + ' ' + error.message);
+			});
 		},
 		addStopWord: async function () {
 			if (event) {
 				event.preventDefault()
 			}
+			const searchParams = {};
+			console.log(this.searchDate);
+			console.log(this.client);
+			console.log(this.desc);
+			if (this.desc) { searchParams.desc = this.desc }
+			else if (this.customer) { searchParams.client = this.customer }
+			else { searchParams.date = this.date.split('-').reverse().join('.') }
+
 			const stopWords = getSelection().toString();
 			console.log(stopWords);
 			if (stopWords.length != 0) {
@@ -90,7 +153,26 @@ var app = new Vue({
 
 				let result = await response.text();
 				alert(result);
-				location.reload();
+				fetch(host + ':' + port + '/search?' + new URLSearchParams(searchParams).toString(), {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				}).then(async res => {
+					let result = JSON.parse(await res.text());
+					if (result.items) {
+						this.items = result.items
+						this.message = null;
+					};
+					if (result.message) {
+						this.items = null;
+						this.message = result.message;
+					};
+				}).catch(error => {
+					this.isError = true;
+					this.status = 'Нет ответа сервера';
+					console.error(this.lastUpdateTime + ' ' + this.status + ' ' + error.message);
+				});
 			} else {
 				alert('Не выделено слово для добавления в список стоп-слов');
 			}

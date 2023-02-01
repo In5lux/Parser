@@ -9,6 +9,7 @@ services:
     volumes:
       - ../configs/.env-parser:/opt/app/.env
       - ../db/db.json:/opt/app/db/db.json
+      - ../db/stopwords.json:/opt/app/db/stopwords.json
     ports:
       - 3000:3000
 networks:

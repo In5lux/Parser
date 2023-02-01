@@ -28,8 +28,6 @@ export const __dirname = fileURLToPath(new URL('.', import.meta.url));
 export const dbPath = path.join(__dirname, '../db/db.json');
 export const stopWordsPath = path.join(__dirname, '../db/stopwords.json');
 
-console.log(stopWordsPath);
-
 config({ path: path.join(__dirname, '../.env') });
 export const bot = new Telegraf(process.env.TOKEN);
 export let db = JSON.parse(readFileSync(dbPath, 'utf-8')).flat();
