@@ -6,6 +6,7 @@ import { Server } from 'socket.io';
 import http from 'http';
 import bodyParser from 'body-parser';
 import { txtFilterByStopWords } from './helpers/textFilter.js';
+import { validateSearchParams } from './helpers/validateSearchParams.js';
 
 export let searchParams;
 
@@ -72,6 +73,8 @@ export const runServer = () => {
 
 		if (Object.keys(searchParams).length == 0) {
 			res.json({ message: 'Не выбраны параметры поиска' });
+		} else if (!validateSearchParams(searchParams)) {
+			res.json({ message: 'Неверные параметры поиска' });
 		} else {
 			let data = JSON.parse(readFileSync(dbPath, 'utf-8'));
 
@@ -91,8 +94,11 @@ export const runServer = () => {
 
 	app.get('/db', (req, res) => {
 		searchParams = req.query;
+
 		if (Object.keys(searchParams).length == 0) {
 			res.render('index', { message: 'Не выбраны параметры поиска' });
+		} else if (!validateSearchParams(searchParams)) {
+			res.render('index', { message: 'Неверные параметры поиска' });
 		} else {
 			let data = JSON.parse(readFileSync(dbPath, 'utf-8'));
 
