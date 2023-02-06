@@ -1,6 +1,6 @@
 import express from 'express';
 import path from 'path';
-import { myEmitter, dbPath, stopWordsPath, __dirname } from './index.js';
+import { myEmitter, dbPath, stopWordsPath, __dirname, parserName } from './index.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { Server } from 'socket.io';
 import http from 'http';
@@ -45,6 +45,9 @@ export const runServer = () => {
 			myEmitter.on('done', () => {
 				io.to('room').emit('add mess', 'Выполнено');
 				isRunning = false;
+			});
+			myEmitter.on('getExecutor', () => {
+				io.to('room').emit('executor', parserName);
 			});
 		});
 		socket.on('disconnect', function (_data) {

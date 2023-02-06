@@ -1,11 +1,11 @@
 const dateFormat = d => `${d.getFullYear()}-${d.getMonth().toString().length == 1 ? ('0' + (d.getMonth() + 1)) : d.getMonth()}-${d.getDate().toString().length == 1 ? ('0' + (d.getDate())) : d.getDate()}`;
 
 const host = 'http://localhost';
-const port = 3333;
+const port = 3000;
 
 var socket = io.connect();
 
-socket.on('add mess', function (data) { })
+socket.on('add mess', function (data) { });
 
 var app = new Vue({
 	el: '#app',
@@ -19,7 +19,8 @@ var app = new Vue({
 		status: null,
 		isError: false,
 		items: null,
-		message: null
+		message: null,
+		executor: null
 	},
 	methods: {
 		parse: function () {
@@ -29,10 +30,13 @@ var app = new Vue({
 			this.isError = false;
 			socket.emit('send mess', 'Start parsing');
 			socket.on('add mess', async function (data) {
-				console.log(data);
 				const d = await data;
 				app.status = d;
-			});			
+			});
+			socket.on('executor', async function (data) {
+				const d = await data;
+				app.executor = d;
+			});
 			const searchParams = {
 				date: this.searchDate
 			}
@@ -179,4 +183,3 @@ var app = new Vue({
 		},
 	}
 });
-

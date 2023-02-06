@@ -21,7 +21,7 @@ html(lang="ru")
             //- p Заказчик: {{ customer }}
             //- p Описание: {{ desc }}
             span.msg(v-if="isError == true") Ошибка: {{ status }}
-            span.msg(v-if="isError == false") Последнее обновление: {{ lastUpdateTime }} {{ status }}
+            span.msg(v-if="isError == false" v-bind:title="status=='Парсинг' ? executor : null") Последнее обновление: {{ lastUpdateTime }} {{ status }}
             button.stop-word(v-on:click="addStopWord") 
               img(src="img/stop.svg" width="20" height="20" title="Добавление стоп-слова в базу") 
               

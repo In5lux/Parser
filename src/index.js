@@ -18,6 +18,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getArgs } from './helpers/args.js';
+import { parsersInfo } from './helpers/parsersInfo.js';
 import { argv } from 'process';
 import { runServer } from './main.js';
 
@@ -33,6 +34,8 @@ export const bot = new Telegraf(process.env.TOKEN);
 export let db = JSON.parse(readFileSync(dbPath, 'utf-8')).flat();
 
 //console.clear();
+
+export let parserName = '';
 
 const parsers = [
 	parserZakupkiGov,
@@ -55,6 +58,8 @@ export const myEmitter = new EventEmitter();
 myEmitter.on('next', () => {
 	const { value, done } = parsersIterator.next();
 	if (!done) {
+		parserName = parsersInfo[value.name];
+		myEmitter.emit('getExecutor');
 		value();
 	} else {
 		myEmitter.emit('done');
