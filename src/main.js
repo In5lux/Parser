@@ -128,7 +128,7 @@ export const runServer = () => {
 		const stopWords = JSON.parse(readFileSync(stopWordsPath, 'utf-8'));
 		stopWords.push(stopWord);
 		writeFileSync(stopWordsPath, JSON.stringify(stopWords));
-		res.send(JSON.stringify(msg));
+		res.send(msg);
 	});
 
 	server.listen(port, () => {

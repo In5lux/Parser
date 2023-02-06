@@ -7,6 +7,11 @@ var socket = io.connect();
 
 socket.on('add mess', function (data) { });
 
+Vue.component('sw-informer', {
+	props: ['stopword'],
+	template: `<div>{{ stopword }}</div>`
+})
+
 var app = new Vue({
 	el: '#app',
 	data: {
@@ -20,7 +25,9 @@ var app = new Vue({
 		isError: false,
 		items: null,
 		message: null,
-		executor: null
+		executor: null,
+		stopword: null,
+		isActive: null
 	},
 	methods: {
 		parse: function () {
@@ -43,11 +50,8 @@ var app = new Vue({
 			if (this.customer) searchParams.client = this.customer;
 			fetch(host + ':' + port + '/parse?' + new URLSearchParams(searchParams).toString())
 				.then(async _res => {
-					//const response = await res.text();
-					//this.status = response;
 					this.lastUpdateTime = new Date().toLocaleString();
 					localStorage.setItem('lastUpdateTime', this.lastUpdateTime);
-					//console.log(this.lastUpdateTime + ' ' + this.status);
 				}).catch(error => {
 					this.isError = true;
 					this.status = 'Нет ответа сервера';
@@ -56,7 +60,6 @@ var app = new Vue({
 		},
 		search: async function () {
 			this.isError = false;
-			console.log(this.date);
 			if (event) {
 				event.preventDefault()
 			}
@@ -88,15 +91,6 @@ var app = new Vue({
 				this.status = 'Нет ответа сервера';
 				console.error(this.lastUpdateTime + ' ' + this.status + ' ' + error.message);
 			});
-
-			// if (this.desc) {
-			// 	window.open(host + ':' + port + `/db?desc=${this.desc}`, "_self");
-			// 	localStorage.removeItem('date');
-			// };
-			// if (this.customer) {
-			// 	window.open(host + ':' + port + `/db?client=${this.customer}`, "_self");
-			// 	localStorage.removeItem('date');
-			// };
 		},
 		dateChange: function handler() {
 			this.isError = false;
@@ -109,7 +103,6 @@ var app = new Vue({
 			const date = event.target.value.split('-').reverse().join('.');
 			this.searchDate = date;
 			localStorage.setItem('searchDate', date);
-			// window.open(host + ':' + port + `/db?date=${date}`, "_self");
 
 			fetch(`${host}:${port}/search?date=${date}`, {
 				method: 'GET',
@@ -137,15 +130,11 @@ var app = new Vue({
 				event.preventDefault()
 			}
 			const searchParams = {};
-			console.log(this.searchDate);
-			console.log(this.client);
-			console.log(this.desc);
 			if (this.desc) { searchParams.desc = this.desc }
 			else if (this.customer) { searchParams.client = this.customer }
 			else { searchParams.date = this.date.split('-').reverse().join('.') }
 
-			const stopWords = getSelection().toString();
-			console.log(stopWords);
+			const stopWords = getSelection().toString().trim();
 			if (stopWords.length != 0) {
 				let response = await fetch('/stopwords', {
 					method: 'POST',
@@ -155,8 +144,9 @@ var app = new Vue({
 					body: JSON.stringify([stopWords])
 				});
 
-				let result = await response.text();
-				alert(result);
+				let result = await (await response.text()).replace(/\'/g, '"');				
+				app.stopword = result;
+				this.isActive = true;
 				fetch(host + ':' + port + '/search?' + new URLSearchParams(searchParams).toString(), {
 					method: 'GET',
 					headers: {
@@ -177,9 +167,13 @@ var app = new Vue({
 					this.status = 'Нет ответа сервера';
 					console.error(this.lastUpdateTime + ' ' + this.status + ' ' + error.message);
 				});
-			} else {
-				alert('Не выделено слово для добавления в список стоп-слов');
+			} else {								
+				app.stopword = 'Не выделено слово для добавления в список стоп-слов';
+				this.isActive = true;
 			}
 		},
+		closeInformer: function handler() {
+			app.isActive = false;
+		}
 	}
 });

@@ -25,7 +25,7 @@ html(lang="ru")
             button.stop-word(v-on:click="addStopWord") 
               img(src="img/stop.svg" width="20" height="20" title="Добавление стоп-слова в базу") 
               
-      main
+      main(v-on:click="closeInformer")
         p.search-msg(v-if="message") {{ message }}
         div(v-for="item in items" :key="item.number")
           div.item-card
@@ -44,6 +44,8 @@ html(lang="ru")
               a(v-if="item.documents" v-bind:href="item.documents" target="_blank")
                 <b>Документы</b>...              
           hr
+        div.informer-bachground(v-bind:class="{ hide: !isActive }")
+          sw-informer.stop-word-informer(v-bind:stopword="stopword")    
 
         if message
           p.search-msg #{message}
