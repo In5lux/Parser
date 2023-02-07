@@ -1,16 +1,19 @@
 const dateFormat = d => `${d.getFullYear()}-${d.getMonth().toString().length == 1 ? ('0' + (d.getMonth() + 1)) : d.getMonth()}-${d.getDate().toString().length == 1 ? ('0' + (d.getDate())) : d.getDate()}`;
 
 const host = 'http://localhost';
-const port = 3000;
+const port = 3333;
 
 var socket = io.connect();
 
 socket.on('add mess', function (data) { });
 
-Vue.component('sw-informer', {
+Vue.component('informer', {
 	props: ['stopword'],
-	template: `<div>{{ stopword }}</div>`
-})
+	template: `<div class="informer-background">
+	<div class="stop-word-informer">{{ stopword }}</div>
+	</div>
+	`
+});
 
 var app = new Vue({
 	el: '#app',
@@ -31,9 +34,6 @@ var app = new Vue({
 	},
 	methods: {
 		parse: function () {
-			if (event) {
-				event.preventDefault()
-			};
 			this.isError = false;
 			socket.emit('send mess', 'Start parsing');
 			socket.on('add mess', async function (data) {
@@ -41,8 +41,8 @@ var app = new Vue({
 				app.status = d;
 			});
 			socket.on('executor', async function (data) {
-				const d = await data;
-				app.executor = d;
+				const d = await JSON.parse(data);
+				app.executor = `${d.name} ${d.index + 1}/${d.length}`;
 			});
 			const searchParams = {
 				date: this.searchDate
@@ -60,12 +60,9 @@ var app = new Vue({
 		},
 		search: async function () {
 			this.isError = false;
-			if (event) {
-				event.preventDefault()
-			}
 			const searchParams = {};
 
-			document.querySelector('.search-msg').classList.add('hide');
+			document.querySelector('.start-msg')?.remove();
 
 			if (this.desc) { searchParams.desc = this.desc }
 			else if (this.customer) { searchParams.client = this.customer }
@@ -96,7 +93,7 @@ var app = new Vue({
 			this.isError = false;
 			this.desc = null;
 			this.customer = null;
-			document.querySelector('.search-msg').classList.add('hide');
+			document.querySelector('.start-msg')?.remove();
 			const value = event.target.value;
 			this.date = value;
 			localStorage.setItem('date', value);
@@ -126,9 +123,6 @@ var app = new Vue({
 			});
 		},
 		addStopWord: async function () {
-			if (event) {
-				event.preventDefault()
-			}
 			const searchParams = {};
 			if (this.desc) { searchParams.desc = this.desc }
 			else if (this.customer) { searchParams.client = this.customer }
@@ -144,7 +138,7 @@ var app = new Vue({
 					body: JSON.stringify([stopWords])
 				});
 
-				let result = await (await response.text()).replace(/\'/g, '"');				
+				let result = (await response.text()).replace(/\'/g, '"');				
 				app.stopword = result;
 				this.isActive = true;
 				fetch(host + ':' + port + '/search?' + new URLSearchParams(searchParams).toString(), {
@@ -167,7 +161,7 @@ var app = new Vue({
 					this.status = 'Нет ответа сервера';
 					console.error(this.lastUpdateTime + ' ' + this.status + ' ' + error.message);
 				});
-			} else {								
+			} else {							
 				app.stopword = 'Не выделено слово для добавления в список стоп-слов';
 				this.isActive = true;
 			}

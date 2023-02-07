@@ -35,8 +35,6 @@ export let db = JSON.parse(readFileSync(dbPath, 'utf-8')).flat();
 
 //console.clear();
 
-export let parserName = '';
-
 const parsers = [
 	parserZakupkiGov,
 	parserRosatom,
@@ -51,6 +49,12 @@ const parsers = [
 	parserB2BCenter,
 ];
 
+export let dataInfo = {
+	name: null,
+	length: parsers.length,
+	index: null
+};
+
 export let parsersIterator = parsers[Symbol.iterator]();
 
 export const myEmitter = new EventEmitter();
@@ -58,7 +62,8 @@ export const myEmitter = new EventEmitter();
 myEmitter.on('next', () => {
 	const { value, done } = parsersIterator.next();
 	if (!done) {
-		parserName = parsersInfo[value.name];
+		dataInfo.name = parsersInfo[value.name];
+		dataInfo.index = parsers.indexOf(value);
 		myEmitter.emit('getExecutor');
 		value();
 	} else {
