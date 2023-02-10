@@ -11,7 +11,7 @@ html(lang="ru")
     meta(charset="utf-8")
   body
     div#app
-      header              
+      header
           form(v-bind:class="{ error: isError }")
             input(type="date" v-bind:value="date" v-on:change="dateChange")
             input(v-model="customer" type="text" placeholder="Поиск по поставщику")
@@ -22,10 +22,10 @@ html(lang="ru")
             //- p Описание: {{ desc }}
             span.msg(v-if="isError == true") Ошибка: {{ status }}
             span.msg(v-if="isError == false" v-bind:title="status=='Парсинг' ? executor : null") Последнее обновление: {{ lastUpdateTime }} {{ status }}
-            button.stop-word(v-on:click.prevent="addStopWord") 
+            button.stop-word(v-on:click.prevent="addStopWord" v-on:click.prevent.alt.exact="stopWordEditor") 
               img(src="img/stop.svg" width="20" height="20" title="Добавление стоп-слова в базу") 
               
-      main(v-on:click="closeInformer")
+      main(v-on:click.prevent="isActive=false" v-on:click.prevent.ctrl.exact="isStopwordsEditor=false")        
         p.search-msg(v-if="message") {{ message }}
         div(v-for="item in items" :key="item.number")
           div.item-card
@@ -44,7 +44,8 @@ html(lang="ru")
               a(v-if="item.documents" v-bind:href="item.documents" target="_blank")
                 <b>Документы</b>...              
           hr        
-        informer(v-if= "isActive" v-bind:stopword="stopword")
+        informer(v-if="isActive" v-bind:stopword="stopword")
+        stopwords-editor(v-if="isStopwordsEditor" v-bind:stopwords_list="stopwords_list"  v-bind:stop_word_delete="stop_word_delete")
 
         if message
           p.start-msg #{message}

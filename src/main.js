@@ -131,6 +131,18 @@ export const runServer = () => {
 		res.send(msg);
 	});
 
+	app.get('/stopwords', (req, res) => {
+		const stopWords = JSON.parse(readFileSync(stopWordsPath, 'utf-8'));
+		res.json(stopWords);
+	});
+
+	app.patch('/stopwords', (req, res) => {
+		const stopWords = JSON.parse(readFileSync(stopWordsPath, 'utf-8'));
+		stopWords.splice(req.body[0], 1);
+		writeFileSync(stopWordsPath, JSON.stringify(stopWords));
+		res.json(stopWords);
+	});
+
 	server.listen(port, () => {
 		console.log(`Server listening on port ${port}`);
 	});

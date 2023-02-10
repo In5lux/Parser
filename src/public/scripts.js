@@ -15,6 +15,15 @@ Vue.component('informer', {
 	`
 });
 
+Vue.component('stopwords-editor', {
+	props: ['stopwords_list', 'stop_word_delete'],
+	template: `<div class="stopwords-editor-background">
+	<div class="stop-words-editor">
+			<span class="word" v-for="(word, index) in stopwords_list" :id="index" :key="index" v-on:click.alt.exact="stop_word_delete">{{word}}</span>
+		</div>
+	</div>`
+});
+
 var app = new Vue({
 	el: '#app',
 	data: {
@@ -30,7 +39,9 @@ var app = new Vue({
 		message: null,
 		executor: null,
 		stopword: null,
-		isActive: null
+		isActive: null,
+		isStopwordsEditor: null,
+		stopwords_list: null,
 	},
 	methods: {
 		parse: function () {
@@ -138,7 +149,7 @@ var app = new Vue({
 					body: JSON.stringify([stopWords])
 				});
 
-				let result = (await response.text()).replace(/\'/g, '"');				
+				let result = (await response.text()).replace(/\'/g, '"');
 				app.stopword = result;
 				this.isActive = true;
 				fetch(host + ':' + port + '/search?' + new URLSearchParams(searchParams).toString(), {
@@ -161,13 +172,35 @@ var app = new Vue({
 					this.status = 'Нет ответа сервера';
 					console.error(this.lastUpdateTime + ' ' + this.status + ' ' + error.message);
 				});
-			} else {							
+			} else {
 				app.stopword = 'Не выделено слово для добавления в список стоп-слов';
 				this.isActive = true;
 			}
 		},
-		closeInformer: function handler() {
-			app.isActive = false;
-		}
+		stopWordEditor: function handler() {
+			this.isStopwordsEditor = true;			
+			fetch(host + ':' + port + '/stopwords', {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			}).then(async res => {
+				let result = JSON.parse(await res.text());
+				app.stopwords_list = result;				
+			});			
+		},
+		stop_word_delete: function () {
+			const id = event.target.id;
+			fetch(host + ':' + port + '/stopwords', {
+				method: 'PATCH',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify([id])
+			}).then(async res => {
+				let result = JSON.parse(await res.text());
+				app.stopwords_list = result;
+			});
+		},
 	}
 });
