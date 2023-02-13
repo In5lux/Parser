@@ -123,12 +123,14 @@ export const runServer = () => {
 
 	app.post('/stopwords', (req, res) => {
 		const stopWord = req.body[0].toLowerCase();
-		const msg = `Стоп-слово '${stopWord}' добавлено в базу`;
-		console.log(msg);
 		const stopWords = JSON.parse(readFileSync(stopWordsPath, 'utf-8'));
-		stopWords.push(stopWord);
-		writeFileSync(stopWordsPath, JSON.stringify(stopWords));
-		res.send(msg);
+		if (!stopWords.includes(stopWord)) {
+			stopWords.push(stopWord);
+			writeFileSync(stopWordsPath, JSON.stringify(stopWords));
+			res.send(`Стоп-слово '${stopWord}' добавлено в базу`);
+		} else {
+			res.send(`Стоп-слово '${stopWord}' есть в базе`);
+		}
 	});
 
 	app.get('/stopwords', (req, res) => {

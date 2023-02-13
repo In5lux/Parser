@@ -134,6 +134,7 @@ var app = new Vue({
 			});
 		},
 		addStopWord: async function () {
+			this.isActive = true;
 			const searchParams = {};
 			if (this.desc) { searchParams.desc = this.desc }
 			else if (this.customer) { searchParams.client = this.customer }
@@ -151,7 +152,6 @@ var app = new Vue({
 
 				let result = (await response.text()).replace(/\'/g, '"');
 				app.stopword = result;
-				this.isActive = true;
 				fetch(host + ':' + port + '/search?' + new URLSearchParams(searchParams).toString(), {
 					method: 'GET',
 					headers: {
@@ -167,6 +167,7 @@ var app = new Vue({
 						this.items = null;
 						this.message = result.message;
 					};
+					document.querySelector('.start-msg')?.remove();
 				}).catch(error => {
 					this.isError = true;
 					this.status = 'Нет ответа сервера';
@@ -174,11 +175,10 @@ var app = new Vue({
 				});
 			} else {
 				app.stopword = 'Не выделено слово для добавления в список стоп-слов';
-				this.isActive = true;
 			}
 		},
 		stopWordEditor: function handler() {
-			this.isStopwordsEditor = true;			
+			this.isStopwordsEditor = true;
 			fetch(host + ':' + port + '/stopwords', {
 				method: 'GET',
 				headers: {
@@ -186,8 +186,8 @@ var app = new Vue({
 				}
 			}).then(async res => {
 				let result = JSON.parse(await res.text());
-				app.stopwords_list = result;				
-			});			
+				app.stopwords_list = result;
+			});
 		},
 		stop_word_delete: function () {
 			const id = event.target.id;
@@ -204,3 +204,14 @@ var app = new Vue({
 		},
 	}
 });
+
+const body = document.querySelector('body');
+
+body.addEventListener('click', () => {
+	if (app.isActive || app.isStopwordsEditor) {
+		body.classList.add('informer_open')
+	} else {
+		body.classList.remove('informer_open')
+	}
+})
+
