@@ -14,7 +14,7 @@ html(lang="ru")
       header
           form(v-bind:class="{ error: isError }")
             input(type="date" v-bind:value="date" v-on:change="dateChange")
-            input(v-model="customer" type="text" placeholder="Поиск по поставщику")
+            input(v-model="customer" type="text" placeholder="Поиск по заказчику")
             input(v-model="desc" type="text" placeholder="Поиск в описании")
             button#search(v-on:click.prevent="search") Искать
             button#parse(v-on:click.prevent="parse") Обновить          

@@ -57,6 +57,12 @@ button:hover {
   background-color: rgb(12, 0, 124, 0.1);
 }
 
+button:active {
+  color: #000;
+  box-shadow: inset 0px 0px 10px darkslategray;
+  background-color: aqua;
+}
+
 input:focus {
   background-color: linen;  
 }
@@ -164,7 +170,7 @@ hr {
   user-select: none;
 }
 
-.informer_open {
+.hide_scroll {
  overflow: hidden;
  padding-right: 17px;
 }

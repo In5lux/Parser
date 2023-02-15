@@ -207,11 +207,11 @@ var app = new Vue({
 
 const body = document.querySelector('body');
 
-body.addEventListener('click', () => {
-	if (app.isActive || app.isStopwordsEditor) {
-		body.classList.add('informer_open')
+body.addEventListener('click', () => {	
+	if (body.scrollHeight !== window.innerHeight && app.isActive || app.isStopwordsEditor) {
+		body.classList.add('hide_scroll')
 	} else {
-		body.classList.remove('informer_open')
+		body.classList.remove('hide_scroll')
 	}
 })
 
