@@ -3,14 +3,13 @@ import { format } from 'date-fns';
 import { getArgs } from '../helpers/args.js';
 import { argv } from 'process';
 import * as cheerio from 'cheerio';
-import { bot, myEmitter, db, dbPath } from '../index.js';
+import { bot, myEmitter, db, dbPath, mailer } from '../index.js';
 import { writeFileSync } from 'fs';
 import { txtFilterByStopWords } from '../helpers/textFilter.js';
 import { isNew } from '../helpers/isNew.js';
 import { priceFilter } from '../helpers/priceFilter.js';
 import { collectData } from '../helpers/collectData.js';
 import { searchParams } from '../main.js';
-import { Mail } from '../mailer/mailer.js';
 import { Template } from '../mailer/template/mail-template.service.js';
 
 const parserZakupkiMos = () => {
@@ -143,11 +142,9 @@ const parserZakupkiMos = () => {
 											+ `*Окончание:* ${result.end}\n\n`
 											+ `*Ссылка:* ${result.link}`;
 
-										const mail = new Mail(new Template([result]));
-
 										setTimeout(() => {
 											bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
-											mail.send(process.env.M_USER, process.env.M_PASS, process.env.EMAILS).catch(console.error);
+											mailer.send(new Template([result]));
 										}, delay);
 										delay += 1000;
 									}

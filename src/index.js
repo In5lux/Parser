@@ -21,6 +21,7 @@ import { getArgs } from './helpers/args.js';
 import { parsersInfo } from './helpers/parsersInfo.js';
 import { argv } from 'process';
 import { runServer } from './main.js';
+import { Mailer } from './mailer/mailer.js';
 
 //const __filename = fileURLToPath(import.meta.url);
 
@@ -31,6 +32,7 @@ export const stopWordsPath = path.join(__dirname, '../db/stopwords.json');
 
 config({ path: path.join(__dirname, '../.env') });
 export const bot = new Telegraf(process.env.TOKEN);
+export const mailer = new Mailer(process.env.M_USER, process.env.M_PASS, process.env.EMAILS);
 export let db = JSON.parse(readFileSync(dbPath, 'utf-8')).flat();
 
 //console.clear();

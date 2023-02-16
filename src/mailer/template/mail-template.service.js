@@ -27,31 +27,10 @@ ${this.data[0].securing_contract ? 'Обеспечение договора: ' +
 
 Страница закупки: ${this.data[0].link}
 
-Документы: ${this.data[0].documents}
-		`;
+Документы: ${this.data[0].documents}`;
 	}
 	html() {
 		const htmlCompiler = pug.compileFile(path.join(__dirname, 'views') + '/' + 'mail.pug');
 		return htmlCompiler({ items: this.data });
 	}
 }
-
-// const t = new Template({
-// 	text: 'Текст',
-// 	html: '<p>Текст</p>'
-// });
-
-// console.log(t.data);
-// console.log(t.text());
-// console.log(t.html());
-
-
-
-// const html = pug.compileFile('C:/011/NJS/PARSER/src/views/mail.pug');
-
-// console.log(html({ items }));
-
-// const t2 = new Template(items);
-
-// //console.log(t2.text());
-// console.log(t2.html());
