@@ -42,9 +42,10 @@ html(lang="ru")
               a(v-bind:href="item.link" target="_blank")
                 <b>Подробнее</b>...  
               a(v-if="item.documents" v-bind:href="item.documents" target="_blank")
-                <b>Документы</b>...              
+                <b>Документы</b>...   
+            img.mail(src="img/mail.png" alt="Отправить на email" width="40" v-on:click.prevent="sendMail" :id="item.number")          
           hr        
-        informer(v-if="isActive" v-bind:stopword="stopword")
+        informer(v-if="isActive" v-bind:informer_msg="informer_msg")
         stopwords-editor(v-if="isStopwordsEditor" v-bind:stopwords_list="stopwords_list"  v-bind:stop_word_delete="stop_word_delete")
 
         if message

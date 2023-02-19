@@ -1,12 +1,13 @@
 import express from 'express';
 import path from 'path';
-import { myEmitter, dbPath, stopWordsPath, __dirname, dataInfo } from './index.js';
+import { myEmitter, dbPath, stopWordsPath, __dirname, dataInfo, mailer } from './index.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { Server } from 'socket.io';
 import http from 'http';
 import bodyParser from 'body-parser';
 import { txtFilterByStopWords } from './helpers/textFilter.js';
 import { validateSearchParams } from './helpers/validateSearchParams.js';
+import { Template } from './mailer/template/mail-template.service.js';
 
 export let searchParams;
 
@@ -143,6 +144,13 @@ export const runServer = () => {
 		stopWords.splice(req.body[0], 1);
 		writeFileSync(stopWordsPath, JSON.stringify(stopWords));
 		res.json(stopWords);
+	});
+
+	app.post('/mail', (req, res) => {
+		console.log(req.body[0]);
+		const item = JSON.parse(readFileSync(dbPath, 'utf-8')).filter(item => item.number == req.body[0]);
+		mailer.send(new Template(item));
+		res.send('Информация о закупке отправлена на электронную почту');
 	});
 
 	server.listen(port, () => {

@@ -9,8 +9,7 @@ RUN apt-get update \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& groupadd -r pptruser && useradd -rm -g pptruser -G audio,video pptruser
 WORKDIR /opt/app
-ADD *.json ./
-ADD *.cjs ./
+ADD *.json *.cjs ./
 RUN npm install --omit=dev
 ADD . .
 RUN unlink /etc/localtime \

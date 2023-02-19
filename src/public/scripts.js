@@ -8,9 +8,9 @@ var socket = io.connect();
 socket.on('add mess', function (data) { });
 
 Vue.component('informer', {
-	props: ['stopword'],
+	props: ['informer_msg'],
 	template: `<div class="informer-background">
-	<div class="stop-word-informer">{{ stopword }}</div>
+	<div class="stop-word-informer">{{ informer_msg }}</div>
 	</div>
 	`
 });
@@ -38,7 +38,7 @@ var app = new Vue({
 		items: null,
 		message: null,
 		executor: null,
-		stopword: null,
+		informer_msg: null,
 		isActive: null,
 		isStopwordsEditor: null,
 		stopwords_list: null,
@@ -134,7 +134,6 @@ var app = new Vue({
 			});
 		},
 		addStopWord: async function () {
-			this.isActive = true;
 			const searchParams = {};
 			if (this.desc) { searchParams.desc = this.desc }
 			else if (this.customer) { searchParams.client = this.customer }
@@ -151,7 +150,7 @@ var app = new Vue({
 				});
 
 				let result = (await response.text()).replace(/\'/g, '"');
-				app.stopword = result;
+				app.informer_msg = result;
 				fetch(host + ':' + port + '/search?' + new URLSearchParams(searchParams).toString(), {
 					method: 'GET',
 					headers: {
@@ -174,11 +173,11 @@ var app = new Vue({
 					console.error(this.lastUpdateTime + ' ' + this.status + ' ' + error.message);
 				});
 			} else {
-				app.stopword = 'Не выделено слово для добавления в список стоп-слов';
+				app.informer_msg = 'Не выделено слово для добавления в список стоп-слов';
 			}
+			this.isActive = true;
 		},
 		stopWordEditor: function handler() {
-			this.isStopwordsEditor = true;
 			fetch(host + ':' + port + '/stopwords', {
 				method: 'GET',
 				headers: {
@@ -188,6 +187,7 @@ var app = new Vue({
 				let result = JSON.parse(await res.text());
 				app.stopwords_list = result;
 			});
+			this.isStopwordsEditor = true;
 		},
 		stop_word_delete: function () {
 			const id = event.target.id;
@@ -202,12 +202,27 @@ var app = new Vue({
 				app.stopwords_list = result;
 			});
 		},
+		sendMail: async function () {
+			const id = event.target.id;
+			fetch(host + ':' + port + '/mail', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify([id])
+			}).then(async res => {
+				let result = await res.text();
+				app.informer_msg = result;
+				console.log(app.informer_msg);
+				this.isActive = true;
+			})
+		}
 	}
 });
 
 const body = document.querySelector('body');
 
-body.addEventListener('click', () => {	
+body.addEventListener('click', () => {
 	if (body.scrollHeight !== window.innerHeight && app.isActive || app.isStopwordsEditor) {
 		body.classList.add('hide_scroll')
 	} else {
