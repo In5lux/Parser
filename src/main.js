@@ -1,6 +1,6 @@
 import express from 'express';
 import path from 'path';
-import { myEmitter, dbPath, stopWordsPath, __dirname, dataInfo, mailer } from './index.js';
+import { myEmitter, dbPath, stopWordsPath, __dirname, dataInfo, mailer, parsingStatusPath } from './index.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { Server } from 'socket.io';
 import http from 'http';
@@ -8,6 +8,7 @@ import bodyParser from 'body-parser';
 import { txtFilterByStopWords } from './helpers/textFilter.js';
 import { validateSearchParams } from './helpers/validateSearchParams.js';
 import { Template } from './mailer/template/mail-template.service.js';
+import { Status } from './helpers/status.js';
 
 export let searchParams;
 
@@ -39,13 +40,16 @@ export const runServer = () => {
 		socket.join('room');
 		//console.log(socket.handshake);
 		//connections.push(socket);		
-		//console.log(socket.rooms);
+		//console.log(socket.rooms);				
 		socket.on('send mess', async (_data) => {
 			//console.log(data);
 			io.to('room').emit('add mess', 'Парсинг');
 			myEmitter.on('done', () => {
 				io.to('room').emit('add mess', 'Выполнено');
 				isRunning = false;
+			});
+			myEmitter.on('cron', () => {
+				io.to('room').emit('add mess', 'Парсинг');
 			});
 			myEmitter.on('getExecutor', () => {
 				io.to('room').emit('executor', JSON.stringify(dataInfo));
@@ -59,18 +63,23 @@ export const runServer = () => {
 	});
 
 	app.get('/parse', (req, res) => {
+		Status.run();
 		searchParams = req.query;
 		if (isRunning == false) {
 			isRunning = true;
 			myEmitter.emit('next');
 		}
-		res.send('Парсинг');
+		res.json(Status.get());
 	});
 
 	app.get('/', (req, res) => {
 		res.render('index', { message: 'Необходимо выбрать параметры поиска' });
 	});
 
+	app.get('/status', (req, res) => {
+		const status = JSON.parse(readFileSync(parsingStatusPath, 'utf-8'));
+		res.json(status);
+	});
 
 	app.get('/search', (req, res) => {
 		searchParams = req.query;

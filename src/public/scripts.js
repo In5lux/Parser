@@ -32,7 +32,7 @@ var app = new Vue({
 		customer: null,
 		price: null,
 		desc: null,
-		lastUpdateTime: localStorage.getItem('lastUpdateTime') || null,
+		lastUpdateTime: null,
 		status: null,
 		isError: false,
 		items: null,
@@ -60,9 +60,11 @@ var app = new Vue({
 			}
 			if (this.customer) searchParams.client = this.customer;
 			fetch(host + ':' + port + '/parse?' + new URLSearchParams(searchParams).toString())
-				.then(async _res => {
-					this.lastUpdateTime = new Date().toLocaleString();
-					localStorage.setItem('lastUpdateTime', this.lastUpdateTime);
+				.then(async res => {
+					const { lastUpdateTime } = JSON.parse(await res.text());
+					app.lastUpdateTime = lastUpdateTime;
+					//this.lastUpdateTime = new Date().toLocaleString();
+					//localStorage.setItem('lastUpdateTime', this.lastUpdateTime);
 				}).catch(error => {
 					this.isError = true;
 					this.status = 'Нет ответа сервера';
@@ -217,8 +219,24 @@ var app = new Vue({
 				this.isActive = true;
 			})
 		}
+	},
+	computed: {
+		getParsingStatus: function () {
+			fetch(host + ':' + port + '/status', {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			}).then(async res => {
+				const { lastUpdateTime, status } = JSON.parse(await res.text());
+				app.lastUpdateTime = lastUpdateTime;
+				app.status = status;
+			});
+		},
 	}
 });
+
+app.getParsingStatus;
 
 const body = document.querySelector('body');
 
