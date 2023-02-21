@@ -66,6 +66,7 @@ const parserB2BCenter = () => {
 			let HTML = false;
 			let attempts = 0;
 			const url = 'https://www.b2b-center.ru/market/';
+			await new Promise(resolve => setTimeout(resolve, 1000));
 			// Retry request until it gets data or tries 5 times
 			while (HTML === false && attempts < 5) {
 				console.log(`B2B Center — попытка ${attempts} загрузки данных страницы по запросу "${query}"`);

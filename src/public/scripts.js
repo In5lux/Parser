@@ -228,5 +228,4 @@ body.addEventListener('click', () => {
 	} else {
 		body.classList.remove('hide_scroll')
 	}
-})
-
+});

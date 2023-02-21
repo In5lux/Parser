@@ -22,6 +22,7 @@ import { parsersInfo } from './helpers/parsersInfo.js';
 import { argv } from 'process';
 import { runServer } from './main.js';
 import { Mailer } from './mailer/mailer.js';
+import { CronJob } from 'cron';
 
 //const __filename = fileURLToPath(import.meta.url);
 
@@ -83,3 +84,15 @@ if (args.cmd) {
 if (args.server) {
 	runServer();
 }
+
+const job = new CronJob(
+	'0 0 10,12,14,16,18,20 * * *',
+	function () {
+		myEmitter.emit('next');
+	},
+	null,
+	true,
+	'Europe/Moscow'
+);
+job.start();
+
