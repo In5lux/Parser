@@ -1,5 +1,6 @@
 import { writeFileSync, readFileSync } from 'fs';
 import { parsingStatusPath } from '../index.js';
+import { format } from 'date-fns';
 
 export class Status {
 	static get() {
@@ -7,13 +8,13 @@ export class Status {
 	}
 	static run() {
 		writeFileSync(parsingStatusPath, JSON.stringify({
-			lastUpdateTime: new Date().toLocaleString(),
+			lastUpdateTime: format(new Date(), 'dd.MM.yyyy, HH:mm:ss'),
 			status: 'Парсинг'
 		}));
 	}
 	static done() {
 		writeFileSync(parsingStatusPath, JSON.stringify({
-			lastUpdateTime: new Date().toLocaleString(),
+			lastUpdateTime: format(new Date(), 'dd.MM.yyyy, HH:mm:ss'),
 			status: 'Выполнено'
 		}));
 	}
