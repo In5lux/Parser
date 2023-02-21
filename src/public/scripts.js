@@ -1,11 +1,9 @@
 const dateFormat = d => `${d.getFullYear()}-${d.getMonth().toString().length == 1 ? ('0' + (d.getMonth() + 1)) : d.getMonth()}-${d.getDate().toString().length == 1 ? ('0' + (d.getDate())) : d.getDate()}`;
 
 const host = 'http://localhost';
-const port = 3333;
+const port = 3000;
 
 var socket = io.connect();
-
-socket.on('add mess', function (data) { });
 
 Vue.component('informer', {
 	props: ['informer_msg'],
@@ -46,26 +44,19 @@ var app = new Vue({
 	methods: {
 		parse: function () {
 			this.isError = false;
-			socket.emit('send mess', 'Start parsing');
-			socket.on('add mess', async function (data) {
-				const d = await data;
-				app.status = d;
-			});
-			socket.on('executor', async function (data) {
-				const d = await JSON.parse(data);
-				app.executor = `${d.name} ${d.index + 1}/${d.length}`;
-			});
+			socket.emit('send mess', 'Start parsing');			
 			const searchParams = {
 				date: this.searchDate
 			}
 			if (this.customer) searchParams.client = this.customer;
 			fetch(host + ':' + port + '/parse?' + new URLSearchParams(searchParams).toString())
-				.then(async res => {
-					const { lastUpdateTime } = JSON.parse(await res.text());
-					app.lastUpdateTime = lastUpdateTime;
-					//this.lastUpdateTime = new Date().toLocaleString();
-					//localStorage.setItem('lastUpdateTime', this.lastUpdateTime);
-				}).catch(error => {
+				// .then(async res => {
+				// 	const { lastUpdateTime } = JSON.parse(await res.text());
+				// 	app.lastUpdateTime = lastUpdateTime;
+				// 	//this.lastUpdateTime = new Date().toLocaleString();
+				// 	//localStorage.setItem('lastUpdateTime', this.lastUpdateTime);
+				// })
+				.catch(error => {
 					this.isError = true;
 					this.status = 'Нет ответа сервера';
 					console.error(this.lastUpdateTime + ' ' + this.status + ' ' + error.message);
@@ -237,6 +228,16 @@ var app = new Vue({
 });
 
 app.getParsingStatus;
+
+socket.on('add mess', async function (data) {
+	const { lastUpdateTime, status } = await data;;
+	app.lastUpdateTime = lastUpdateTime;
+	app.status = status;
+});
+socket.on('executor', async function (data) {
+	const d = await JSON.parse(data);
+	app.executor = `${d.name} ${d.index + 1}/${d.length}`;
+});
 
 const body = document.querySelector('body');
 

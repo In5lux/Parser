@@ -72,8 +72,8 @@ myEmitter.on('next', () => {
 		myEmitter.emit('getExecutor');
 		value();
 	} else {
-		myEmitter.emit('done');
 		Status.done();
+		myEmitter.emit('done');
 		parsersIterator = parsers[Symbol.iterator]();
 	}
 });

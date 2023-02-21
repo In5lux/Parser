@@ -43,13 +43,13 @@ export const runServer = () => {
 		//console.log(socket.rooms);				
 		socket.on('send mess', async (_data) => {
 			//console.log(data);
-			io.to('room').emit('add mess', 'Парсинг');
-			myEmitter.on('done', () => {
-				io.to('room').emit('add mess', 'Выполнено');
+			io.to('room').emit('add mess', await Status.get());
+			myEmitter.on('done', async () => {
+				io.to('room').emit('add mess', await Status.get());
 				isRunning = false;
 			});
-			myEmitter.on('cron', () => {
-				io.to('room').emit('add mess', 'Парсинг');
+			myEmitter.on('cron', async () => {
+				io.to('room').emit('add mess', await Status.get());
 			});
 			myEmitter.on('getExecutor', () => {
 				io.to('room').emit('executor', JSON.stringify(dataInfo));
@@ -77,8 +77,7 @@ export const runServer = () => {
 	});
 
 	app.get('/status', (req, res) => {
-		const status = JSON.parse(readFileSync(parsingStatusPath, 'utf-8'));
-		res.json(status);
+		res.json(Status.get());
 	});
 
 	app.get('/search', (req, res) => {
