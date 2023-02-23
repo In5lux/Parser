@@ -1,6 +1,6 @@
 import express from 'express';
 import path from 'path';
-import { myEmitter, dbPath, stopWordsPath, __dirname, dataInfo, mailer, parsingStatusPath } from './index.js';
+import { myEmitter, dbPath, stopWordsPath, __dirname, dataInfo, mailer } from './index.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { Server } from 'socket.io';
 import http from 'http';
@@ -33,7 +33,7 @@ export const runServer = () => {
 	const server = http.createServer(app);
 	const io = new Server(server);
 
-	//const connections = [];	
+	//const connections = [];
 
 	io.on('connection', function (socket) {
 		console.log(`Пользователь ${socket.id} подключен`);
@@ -43,17 +43,8 @@ export const runServer = () => {
 		//console.log(socket.rooms);				
 		socket.on('send mess', async (_data) => {
 			//console.log(data);
+			if (isRunning == false) Status.run();
 			io.to('room').emit('add mess', await Status.get());
-			myEmitter.on('done', async () => {
-				io.to('room').emit('add mess', await Status.get());
-				isRunning = false;
-			});
-			myEmitter.on('cron', async () => {
-				io.to('room').emit('add mess', await Status.get());
-			});
-			myEmitter.on('getExecutor', () => {
-				io.to('room').emit('executor', JSON.stringify(dataInfo));
-			});
 		});
 		socket.on('disconnect', function (_data) {
 			// Удаления пользователя из массива
@@ -62,8 +53,18 @@ export const runServer = () => {
 		});
 	});
 
+	myEmitter.on('done', async () => {
+		io.to('room').emit('add mess', await Status.get());
+		isRunning = false;
+	});
+	myEmitter.on('cron', async () => {
+		io.to('room').emit('add mess', await Status.get());
+	});
+	myEmitter.on('getExecutor', () => {
+		io.to('room').emit('executor', JSON.stringify(dataInfo));
+	});
+
 	app.get('/parse', (req, res) => {
-		Status.run();
 		searchParams = req.query;
 		if (isRunning == false) {
 			isRunning = true;

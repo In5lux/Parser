@@ -91,9 +91,9 @@ if (args.server) {
 const job = new CronJob(
 	'0 0 10,12,14,16,18,20 * * *',
 	function () {
+		Status.run();
 		myEmitter.emit('next');
 		myEmitter.emit('cron');
-		Status.run();
 	},
 	null,
 	true,
