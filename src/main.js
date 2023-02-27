@@ -41,10 +41,17 @@ export const runServer = () => {
 		//console.log(socket.handshake);
 		//connections.push(socket);		
 		//console.log(socket.rooms);				
-		socket.on('send mess', async (_data) => {
-			//console.log(data);
-			if (isRunning == false) Status.run();
-			io.to('room').emit('add mess', await Status.get());
+		socket.on('send mess', async (data) => {
+			console.log(data);
+			if (isRunning == false && await data == 'Start parsing') {
+				try {
+					Status.run();
+				} finally {
+					io.to('room').emit('add mess', await Status.get());
+				}
+			} else {
+				io.to('room').emit('add mess', await Status.get());
+			}
 		});
 		socket.on('disconnect', function (_data) {
 			// Удаления пользователя из массива
@@ -77,9 +84,9 @@ export const runServer = () => {
 		res.render('index', { message: 'Необходимо выбрать параметры поиска' });
 	});
 
-	app.get('/status', (req, res) => {
-		res.json(Status.get());
-	});
+	// app.get('/status', (req, res) => {
+	// 	res.json(Status.get());
+	// });
 
 	app.get('/search', (req, res) => {
 		searchParams = req.query;

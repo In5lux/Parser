@@ -24,6 +24,8 @@ import { argv } from 'process';
 import { runServer } from './main.js';
 import { Mailer } from './mailer/mailer.js';
 import { CronJob } from 'cron';
+import { format } from 'date-fns';
+import { searchParams } from './main.js';
 
 //const __filename = fileURLToPath(import.meta.url);
 
@@ -91,6 +93,7 @@ if (args.server) {
 const job = new CronJob(
 	'0 0 10,12,14,16,18,20 * * *',
 	function () {
+		searchParams.date = format(new Date(), 'dd.MM.yyyy');
 		Status.run();
 		myEmitter.emit('next');
 		myEmitter.emit('cron');

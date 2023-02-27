@@ -211,23 +211,23 @@ var app = new Vue({
 			})
 		}
 	},
-	computed: {
-		getParsingStatus: function () {
-			fetch(host + ':' + port + '/status', {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			}).then(async res => {
-				const { lastUpdateTime, status } = JSON.parse(await res.text());
-				app.lastUpdateTime = lastUpdateTime;
-				app.status = status;
-			});
-		},
-	}
+	// computed: {
+	// 	getParsingStatus: function () {
+	// 		fetch(host + ':' + port + '/status', {
+	// 			method: 'GET',
+	// 			headers: {
+	// 				'Content-Type': 'application/json'
+	// 			}
+	// 		}).then(async res => {
+	// 			const { lastUpdateTime, status } = JSON.parse(await res.text());
+	// 			app.lastUpdateTime = lastUpdateTime;
+	// 			app.status = status;
+	// 		});
+	// 	},
+	// }
 });
 
-app.getParsingStatus;
+//app.getParsingStatus;
 
 socket.on("connect", () => {
 	socket.emit('send mess', 'Connected');
