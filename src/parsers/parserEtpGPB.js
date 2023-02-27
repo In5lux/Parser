@@ -71,7 +71,7 @@ const parserEtpGPB = () => {
 			page.setDefaultNavigationTimeout(0);
 			page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36');
 			// await page.waitForTimeout(3000);			
-			await page.goto(`https://etpgpb.ru/procedures/?search=${encodeURIComponent(query)}}&page=1&per=10&${active}`, { waitUntil: 'networkidle2' });
+			await page.goto(`https://etpgpb.ru/procedures/?search=${encodeURIComponent(query)}}&page=1&per=10&${active}`, { waitUntil: 'load' });
 			// await page.waitForSelector('#searchInput');
 			// await page.focus('#searchInput');
 			// await page.waitForTimeout(1000);

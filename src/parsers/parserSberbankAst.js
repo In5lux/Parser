@@ -76,7 +76,7 @@ const parserSberbankAst = () => {
 			page.setDefaultNavigationTimeout(0);
 			page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36');
 			// await page.waitForTimeout(3000);
-			await page.goto('https://www.sberbank-ast.ru', { waitUntil: 'networkidle2' });
+			await page.goto('https://www.sberbank-ast.ru', { waitUntil: 'load' });
 			await page.waitForSelector('#txtUnitedPurchaseSearch');
 			await page.focus('#txtUnitedPurchaseSearch');
 			await new Promise(r => setTimeout(r, 1000));

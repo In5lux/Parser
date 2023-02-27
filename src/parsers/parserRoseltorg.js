@@ -78,7 +78,7 @@ const parserRoseltorg = () => {
 			// page.on('load', () => console.log('Loaded!', page.url()));
 			// page.on('domcontentloaded', () => console.log('dom fired'));
 			// await page.waitForTimeout(3000);
-			await page.goto(url, { waitUntil: 'networkidle2' });
+			await page.goto(url, { waitUntil: 'load' });
 			await new Promise(r => setTimeout(r, 1000));
 			// await page.screenshot({ path: `page — ${query}.png` });
 			// await page.pdf({ path: `page ${query}.pdf`, printBackground: true, width: '1263px', height: '930px' });
