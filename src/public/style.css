@@ -78,7 +78,7 @@ header {
   position: fixed;
   width: 100%;
   top:0;
-  z-index: 1;     
+  z-index: 1;
 }
 
 main {
@@ -123,11 +123,11 @@ form {
 
 hr {
   border: none;  
- 	width: 98%;
-	height: 50px;
-	margin-top: 0;
+  width: 98%;
+  height: 50px;
+  margin-top: 0;
 	/*border-bottom: 1px solid #1f1209;*/  
-	box-shadow: 0 20px 20px -20px darkslategray;
+  box-shadow: 0 20px 20px -20px darkslategray;
   margin: -70px auto 10px; 
 }
 
@@ -190,6 +190,27 @@ hr {
 .word:hover {
   cursor: pointer;
   background-color: #ccc;
+}
+
+progress{  
+  inline-size: 100%;  
+  appearance: none;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  height: 3px;
+  position: fixed;	
+}
+
+progress::-webkit-progress-bar {
+  background:  #fff;
+}
+
+progress::-moz-progress-bar {
+  background: rgb(0, 100, 255, 0.7);  
+}
+
+progress::-webkit-progress-value {
+  background: rgba(0, 100,255,0.7);  
 }
 
 @media (max-width: 1100px){

@@ -10,7 +10,7 @@ import { validateSearchParams } from './helpers/validateSearchParams.js';
 import { Template } from './mailer/template/mail-template.service.js';
 import { Status } from './helpers/status.js';
 
-export let searchParams;
+export let searchParams = {};
 
 export const runServer = () => {
 

@@ -1,7 +1,7 @@
 const dateFormat = d => `${d.getFullYear()}-${d.getMonth().toString().length == 1 ? ('0' + (d.getMonth() + 1)) : d.getMonth()}-${d.getDate().toString().length == 1 ? ('0' + (d.getDate())) : d.getDate()}`;
 
 const host = 'http://localhost';
-const port = 3333;
+const port = 3000;
 
 var socket = io.connect();
 
@@ -36,6 +36,8 @@ var app = new Vue({
 		items: null,
 		message: null,
 		executor: null,
+		maxProgress: null,
+		parsingProgress: null,
 		informer_msg: null,
 		isActive: null,
 		isStopwordsEditor: null,
@@ -237,10 +239,13 @@ socket.on('add mess', async function (data) {
 	const { lastUpdateTime, status } = await data;;
 	app.lastUpdateTime = lastUpdateTime;
 	app.status = status;
+	if (status == 'Выполнено') app.parsingProgress++;
 });
 socket.on('executor', async function (data) {
 	const d = await JSON.parse(data);
 	app.executor = `${d.name} ${d.index + 1}/${d.length}`;
+	app.maxProgress = d.length;
+	app.parsingProgress = d.index;
 });
 
 const body = document.querySelector('body');

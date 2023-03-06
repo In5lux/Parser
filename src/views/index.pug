@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 html(lang="ru")
   head
     title Поиск закупочных процедур
@@ -12,20 +13,20 @@ html(lang="ru")
   body
     div#app
       header
-          form(v-bind:class="{ error: isError }")
-            input(type="date" v-bind:value="date" v-on:change="dateChange")
-            input(v-model="customer" type="text" placeholder="Поиск по заказчику")
-            input(v-model="desc" type="text" placeholder="Поиск в описании")
-            button#search(v-on:click.prevent="search") Искать
-            button#parse(v-on:click.prevent="parse") Обновить          
-            //- p Заказчик: {{ customer }}
-            //- p Описание: {{ desc }}
-            span.msg(v-if="isError == true") Ошибка: {{ status }}
-            span.msg(v-if="isError == false" v-bind:title="status=='Парсинг' ? executor : null") Последнее обновление: {{ lastUpdateTime }} {{ status }}
-            button.stop-word(v-on:click.prevent="addStopWord" v-on:click.prevent.alt.exact="stopWordEditor") 
-              img(src="img/stop.svg" width="20" height="20" title="Добавление стоп-слова в базу") 
-              
-      main(v-on:click="isActive=false" v-on:click.ctrl.exact="isStopwordsEditor=false")        
+        form(v-bind:class="{ error: isError }")
+          input(type="date" v-bind:value="date" v-on:change="dateChange")
+          input(v-model="customer" type="text" placeholder="Поиск по заказчику")
+          input(v-model="desc" type="text" placeholder="Поиск в описании")
+          button#search(v-on:click.prevent="search") Искать
+          button#parse(v-on:click.prevent="parse") Обновить
+          //- p Заказчик: {{ customer }}
+          //- p Описание: {{ desc }}
+          span.msg(v-if="isError == true") Ошибка: {{ status }}
+          span.msg(v-if="isError == false" v-bind:title="status=='Парсинг' ? executor : null") Последнее обновление: {{ lastUpdateTime }} {{ status }}
+          button.stop-word(v-on:click.prevent="addStopWord" v-on:click.prevent.alt.exact="stopWordEditor")
+            img(src="img/stop.svg" width="20" height="20" title="Добавление стоп-слова в базу")
+        progress(v-bind:value="parsingProgress" v-bind:max="maxProgress")
+      main(v-on:click="isActive=false" v-on:click.ctrl.exact="isStopwordsEditor=false")
         p.search-msg(v-if="message") {{ message }}
         div(v-for="item in items" :key="item.number")
           div.item-card
