@@ -1,7 +1,7 @@
 const dateFormat = d => `${d.getFullYear()}-${d.getMonth().toString().length == 1 ? ('0' + (d.getMonth() + 1)) : d.getMonth()}-${d.getDate().toString().length == 1 ? ('0' + (d.getDate())) : d.getDate()}`;
 
 const host = 'http://localhost';
-const port = 3000;
+const port = 3333;
 
 var socket = io.connect();
 
@@ -52,12 +52,6 @@ var app = new Vue({
 			}
 			if (this.customer) searchParams.client = this.customer;
 			fetch(host + ':' + port + '/parse?' + new URLSearchParams(searchParams).toString())
-				// .then(async res => {
-				// 	const { lastUpdateTime } = JSON.parse(await res.text());
-				// 	app.lastUpdateTime = lastUpdateTime;
-				// 	//this.lastUpdateTime = new Date().toLocaleString();
-				// 	//localStorage.setItem('lastUpdateTime', this.lastUpdateTime);
-				// })
 				.catch(error => {
 					this.isError = true;
 					this.status = 'Нет ответа сервера';
@@ -251,7 +245,7 @@ socket.on('executor', async function (data) {
 const body = document.querySelector('body');
 
 body.addEventListener('click', () => {
-	if (body.scrollHeight !== window.innerHeight && app.isActive || app.isStopwordsEditor) {
+	if (body.scrollHeight > window.innerHeight && app.isActive || app.isStopwordsEditor) {
 		body.classList.add('hide_scroll')
 	} else {
 		body.classList.remove('hide_scroll')
