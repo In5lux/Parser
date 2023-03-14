@@ -68,6 +68,8 @@ const parserSberbankAst = () => {
 		let count = queries.length;
 
 		for (const query of queries) {
+			let html = '';
+			let data = [];
 			const page = await browser.newPage();
 			page.on('dialog', async dialog => {
 				console.log(dialog.message());
@@ -76,89 +78,87 @@ const parserSberbankAst = () => {
 			//page.setDefaultNavigationTimeout(0);
 			page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36');
 			// await page.waitForTimeout(3000);
-			await page.goto('https://www.sberbank-ast.ru', { waitUntil: 'networkidle2' });
-			await page.waitForSelector('#txtUnitedPurchaseSearch');
-			await page.focus('#txtUnitedPurchaseSearch');
-			await new Promise(r => setTimeout(r, 1000));
-			await page.keyboard.type(query);
-			await new Promise(r => setTimeout(r, 1000));
-			await page.click('#btnUnitedPurchaseSearch');
-			await new Promise(r => setTimeout(r, 3000));
-			// await page.screenshot({ path: `page ${query}.png` });
-			const html = await page.evaluate(() => {
-				try {
+			try {
+				await page.goto('https://www.sberbank-ast.ru', { waitUntil: 'load' });
+				await new Promise(r => setTimeout(r, 1000));
+				await page.waitForSelector('#txtUnitedPurchaseSearch');
+				await page.focus('#txtUnitedPurchaseSearch');
+				await new Promise(r => setTimeout(r, 1000));
+				await page.keyboard.type(query);
+				await new Promise(r => setTimeout(r, 1000));
+				await page.click('#btnUnitedPurchaseSearch');
+				await new Promise(r => setTimeout(r, 3000));
+				// await page.screenshot({ path: `page ${query}.png` });
+				html = await page.evaluate(() => {
 					// eslint-disable-next-line no-undef
 					return document.documentElement.outerHTML;
-				} catch (e) {
-					return e.toString();
-				}
-			});
+				});
+				const $ = cheerio.load(html);
 
-			await page.close();
+				const isExsist = !$('body').text().includes('Нет результатов для данной настройки поиска');
 
-			const $ = cheerio.load(html);
+				if (isExsist) {
+					$('.purch-reestr-tbl-div').each((i, elem) => {
+						const result = {
+							number: $(elem).find('.es-el-code-term').text(),
+							section: $(elem).find('.es-el-source-term').text(),
+							type: $(elem).find('.es-el-type-name').text(),
+							status: $(elem).find('div.BidStateName').text() || $(elem).find('div.PurchStateName').text(),
+							customer: $(elem).find('.es-el-org-name').text(),
+							description: $(elem).find('.es-el-name').text().replace(/\n/g, ' '),
+							price: $(elem).find('.es-el-amount').text().replace(/\s{2,}/g, ' ') || '0.00',
+							published: $(elem).find('tr:first-child>td:last-child>table>tbody>tr:first-child>td:last-child>span').text().split(' ')[0],
+							end: $(elem).find('tr:first-child>td:last-child>table>tbody>tr:nth-child(3)>td:last-child>div>span').text().split(' ')[0],
+							link: $(elem).find('tr:nth-child(1)>td:nth-child(2)>div:nth-child(1)>input:nth-child(4)').attr('value'),
+							query
+						};
 
-			const isExsist = !$('body').text().includes('Нет результатов для данной настройки поиска');
+						if (
+							!parseResults.filter((parseResult) => parseResult.link == result.link).length
+							// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
+						) {
+							if (result.published === date || date === '*') {
+								// Фильтр по дате, если дата не указана выводятся все даты
+								const isCustomer = customer
+									? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
+									: undefined;
+								if (isCustomer || customer === undefined && priceFilter(result.price, minPrice)) {
+									// Фильтр по наименованию клиента
+									data.push(result);
+									if (isNew(db, result.number)) {
+										db.push(result);
+										writeFileSync(dbPath, JSON.stringify(db));
+										const message = `*Номер закупки:* ${result.number}\n\n`
+											+ `*Секция площадки:* ${result.section}\n\n`
+											+ `*Статус:* ${result.status}\n\n`
+											+ `*Тип закупки:* ${result.type}\n\n`
+											+ `*Клиент:* ${result.customer}\n\n`
+											+ `*Описание:* ${result.description}\n\n`
+											+ `*Цена:* ${result.price}\n\n`
+											+ `*Дата публикации:* ${result.published}\n\n`
+											+ `*Окончание:* ${result.end}\n\n`
+											+ `*Ссылка:* ${result.link}`;
 
-			let data = [];
-
-			if (isExsist) {
-				$('.purch-reestr-tbl-div').each((i, elem) => {
-					const result = {
-						number: $(elem).find('.es-el-code-term').text(),
-						section: $(elem).find('.es-el-source-term').text(),
-						type: $(elem).find('.es-el-type-name').text(),
-						status: $(elem).find('div.BidStateName').text() || $(elem).find('div.PurchStateName').text(),
-						customer: $(elem).find('.es-el-org-name').text(),
-						description: $(elem).find('.es-el-name').text().replace(/\n/g, ' '),
-						price: $(elem).find('.es-el-amount').text().replace(/\s{2,}/g, ' ') || '0.00',
-						published: $(elem).find('tr:first-child>td:last-child>table>tbody>tr:first-child>td:last-child>span').text().split(' ')[0],
-						end: $(elem).find('tr:first-child>td:last-child>table>tbody>tr:nth-child(3)>td:last-child>div>span').text().split(' ')[0],
-						link: $(elem).find('tr:nth-child(1)>td:nth-child(2)>div:nth-child(1)>input:nth-child(4)').attr('value'),
-						query
-					};
-
-					if (
-						!parseResults.filter((parseResult) => parseResult.link == result.link).length
-						// Проверка на дубли результатов парсинга по разным поисковым запросам и фильр даты
-					) {
-						if (result.published === date || date === '*') {
-							// Фильтр по дате, если дата не указана выводятся все даты
-							const isCustomer = customer
-								? !!result.customer.toLowerCase().replaceAll('"', '').match(customer)
-								: undefined;
-							if (isCustomer || customer === undefined && priceFilter(result.price, minPrice)) {
-								// Фильтр по наименованию клиента
-								data.push(result);
-								if (isNew(db, result.number)) {
-									db.push(result);
-									writeFileSync(dbPath, JSON.stringify(db));
-									const message = `*Номер закупки:* ${result.number}\n\n`
-										+ `*Секция площадки:* ${result.section}\n\n`
-										+ `*Статус:* ${result.status}\n\n`
-										+ `*Тип закупки:* ${result.type}\n\n`
-										+ `*Клиент:* ${result.customer}\n\n`
-										+ `*Описание:* ${result.description}\n\n`
-										+ `*Цена:* ${result.price}\n\n`
-										+ `*Дата публикации:* ${result.published}\n\n`
-										+ `*Окончание:* ${result.end}\n\n`
-										+ `*Ссылка:* ${result.link}`;
-
-									setTimeout(() => {
-										bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
-										mailer.send(new Template([result]));
-									}, delay);
-									delay += 1000;
+										setTimeout(() => {
+											bot.telegram.sendMessage(process.env.CHAT_ID, message, { parse_mode: 'Markdown' });
+											mailer.send(new Template([result]));
+										}, delay);
+										delay += 1000;
+									}
 								}
 							}
+							//data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
 						}
-						//data = data.filter((item) => parseInt(item.price.replace(/\s/g, '')) >= minPrice);
-					}
-					parseResults.push(result);
-				});
-			} else {
-				console.log(`Sberbank AST — Нет доступных результатов по ключевому запросу "${query}"\n`);
+						parseResults.push(result);
+					});
+				} else {
+					console.log(`Sberbank AST — Нет доступных результатов по ключевому запросу "${query}"\n`);
+				}
+			} catch (error) {
+				console.log(`Sberbank AST — Ошибка ${error.message} по запросу ${query}`);
 			}
+			await page.close();
+
 			// console.log(`Sberbank AST — ${query} (${count})`);
 
 			if (data.length > 0) {

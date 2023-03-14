@@ -47,10 +47,11 @@ export const runServer = () => {
 				try {
 					Status.run();
 				} finally {
-					io.to('room').emit('add mess', await Status.get());
+					io.to('room').emit('add mess', Status.current);
 				}
 			} else {
-				io.to('room').emit('add mess', await Status.get());
+				const status = await Status.get();
+				io.to('room').emit('add mess', status);
 			}
 		});
 		socket.on('disconnect', function (_data) {
