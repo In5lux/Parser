@@ -1,6 +1,6 @@
 {
 	"name": "parser",
-	"version": "1.30.7",
+	"version": "1.30.8",
 	"description": "",
 	"main": "index.js",
 	"preferGlobal": true,
@@ -8,6 +8,7 @@
 	"type": "module",
 	"scripts": {
 		"start": "node ./src/index.js",
+		"dev": "node --watch ./src/index.js",
 		"lint": "eslint --debug ./src",
 		"lint:fix": "eslint ./src --fix",
 		"test": "echo \"Error: no test specified\" && exit 1"

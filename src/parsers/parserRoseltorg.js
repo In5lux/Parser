@@ -99,10 +99,10 @@ const parserRoseltorg = () => {
 
 				for (const link of itemLinks) {
 					const itemInfo = {};
-					await page.goto(link, { waitUntil: 'networkidle2' });
+					await page.goto(link, { waitUntil: 'load' });
 					const html2 = await page.content();
 					const $item = cheerio.load(html2);
-					let date = $item('body>div.dialog-off-canvas-main-canvas>main>section.lots-list>div>div>div.lot-item__moredetails>div>table:nth-child(2)>tbody>tr:nth-child(1)>td.data-table__info-td>p').text();
+					let date = $item('body>div.dialog-off-canvas-main-canvas>main>section.lots-list>div>div>div.lot-item__moredetails>div>table:nth-child(2)>tbody>tr.data-table__item.odd>td.data-table__info-td>p').text();
 					date = date.split(' ');
 					date = date[0];
 					date = date.split('.');
